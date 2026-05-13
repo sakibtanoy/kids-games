@@ -10,8 +10,6 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [maxTime, setMaxTime] = useState(30);
-  const [problem, setProblem] = useState({ a: 0, b: 0, op: '+', answer: 0, options: [0] });
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
   const generateProblem = (currentLevel: number, currentDifficulty: 'easy' | 'pro' | 'legend' | null) => {
     if (!currentDifficulty) return;
