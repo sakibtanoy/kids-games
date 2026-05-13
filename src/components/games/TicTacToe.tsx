@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Hash, X, Circle } from 'lucide-react';
+import { Hash, X, Circle, Users } from 'lucide-react';
 
 import { useAuth } from '../AuthProvider';
 import { db } from '../../lib/firebase';
@@ -10,8 +10,9 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
   const { user } = useAuth();
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState<boolean>(true);
-  const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(roomId ? 'legend' : null);
-  const [winner, setWinner] = useState<'player' | 'bot' | 'draw' | null>(null);
+  const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | 'local' | null>(roomId ? 'legend' : null);
+  const [winner, setWinner] = useState<'player' | 'bot' | 'player1' | 'player2' | 'draw' | null>(null);
+  const [localTurn, setLocalTurn] = useState<'X' | 'O'>('X');
   
   // Realtime state
   const [remotePlayerSymbol, setRemotePlayerSymbol] = useState<'X' | 'O' | null>(null);
@@ -47,6 +48,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        if (difficulty === 'local') return squares[a] === 'X' ? 'player1' : 'player2';
         return squares[a] === 'X' ? 'player' : 'bot';
       }
     }
@@ -167,13 +169,26 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       return;
     }
 
+    if (difficulty === 'local') {
+      const newBoard = [...board];
+      newBoard[index] = localTurn;
+      setBoard(newBoard);
+      const win = checkWinner(newBoard);
+      if (win) {
+        setWinner(win as any);
+      } else {
+        setLocalTurn(localTurn === 'X' ? 'O' : 'X');
+      }
+      return;
+    }
+
     if (!isPlayerTurn) return;
     const newBoard = [...board];
     newBoard[index] = 'X';
     setBoard(newBoard);
     const win = checkWinner(newBoard);
     if (win) {
-      setWinner(win);
+      setWinner(win as any);
     } else {
       setIsPlayerTurn(false);
     }
@@ -193,7 +208,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
         <div className="bg-white rounded-[3rem] p-12 text-center max-w-sm w-full shadow-2xl border-b-[12px] border-sky-100">
           <Hash size={64} className="text-sky-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-800 mb-8 uppercase tracking-tighter">TIC TAC TOE</h2>
-          <div className="space-y-4">
+          <div className="grid gap-3">
             {(['easy', 'pro', 'legend'] as const).map(d => (
               <button 
                 key={d}
@@ -203,6 +218,13 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
                 {d}
               </button>
             ))}
+            <div className="h-px bg-slate-100 my-2" />
+            <button 
+              onClick={() => setDifficulty('local')}
+              className="w-full py-4 rounded-2xl font-black uppercase text-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-lg active:translate-y-1 active:shadow-none flex items-center justify-center gap-3"
+            >
+              <Users size={24} /> 2 Players Local
+            </button>
           </div>
         </div>
       </div>
@@ -223,6 +245,9 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
           {roomId ? (
             winner ? (winner === 'draw' ? 'DRAW!' : winner === remotePlayerSymbol ? 'YOU WON!' : 'THEY WON!') 
             : (currentTurnStr === remotePlayerSymbol ? 'Your Turn' : "Opponent's Turn")
+          ) : difficulty === 'local' ? (
+            winner ? (winner === 'draw' ? 'DRAW!' : winner === 'player1' ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!')
+            : `Player ${localTurn === 'X' ? '1' : '2'}'s Turn`
           ) : (
             winner ? (winner === 'player' ? 'YOU WON!' : winner === 'bot' ? 'BOT WON!' : 'DRAW!') 
             : (isPlayerTurn ? 'Your Turn' : "Bot's Turn")
