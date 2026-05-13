@@ -7,9 +7,12 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [problem, setProblem] = useState({ a: 0, b: 0, op: '+', answer: 0, options: [0] });
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [maxTime, setMaxTime] = useState(30);
+  const [showResult, setShowResult] = useState(false);
 
   const generateProblem = (currentLevel: number, currentDifficulty: 'easy' | 'pro' | 'legend' | null) => {
     if (!currentDifficulty) return;
@@ -97,8 +100,21 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
       setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(timer);
-          onScoreSubmit(score);
-          onClose();
+          setFeedback('wrong');
+          setLives(l => {
+            const next = l - 1;
+            if (next <= 0) {
+              onScoreSubmit(score);
+              onClose();
+            } else {
+              setTimeout(() => {
+                setFeedback(null);
+                setTimeLeft(maxTime);
+                generateProblem(level, difficulty);
+              }, 1000);
+            }
+            return next;
+          });
           return 0;
         }
         return t - 1;
@@ -121,17 +137,29 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
       }, 1000);
     } else {
       setFeedback('wrong');
-      setLives(l => l - 1);
-      setTimeout(() => {
-        setFeedback(null);
-        if (lives <= 1) {
-          onScoreSubmit(score);
-          onClose();
+      setLives(l => {
+        const next = l - 1;
+        if (next <= 0) {
+          setShowResult(true);
         } else {
-          generateProblem(level, difficulty);
+          setTimeout(() => {
+            setFeedback(null);
+            generateProblem(level, difficulty);
+          }, 1000);
         }
-      }, 1000);
+        return next;
+      });
+      setTimeout(() => setFeedback(null), 1000);
     }
+  };
+
+  const handleRestart = () => {
+    setLevel(1);
+    setScore(0);
+    setLives(3);
+    setShowResult(false);
+    setTimeLeft(maxTime);
+    generateProblem(1, difficulty);
   };
 
   if (!difficulty) {
@@ -262,6 +290,36 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
           >
             {feedback === 'correct' ? 'AMAZING!' : 'OOPS!'}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showResult && (
+          <div className="absolute inset-0 z-50 bg-emerald-950/90 backdrop-blur-xl flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white p-12 rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-emerald-100 shadow-2xl"
+            >
+              <Trophy size={64} className="text-emerald-500 mx-auto mb-6" />
+              <h2 className="text-5xl font-black text-slate-800 mb-2 tracking-tighter uppercase">QUIZ OVER</h2>
+              <p className="text-emerald-500 font-bold text-3xl mb-8 italic">Score: {score}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={handleRestart}
+                  className="py-5 bg-emerald-500 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#10b981] hover:bg-emerald-400 active:translate-y-2 active:shadow-none transition-all uppercase"
+                >
+                  Again
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="py-5 bg-slate-100 text-slate-500 font-black text-xl rounded-2xl border-b-8 border-slate-200 hover:bg-slate-200 active:translate-y-2 active:shadow-none transition-all uppercase"
+                >
+                  Exit
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -127,6 +127,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       const win = checkWinner(newBoard);
       if (win) {
         setWinner(win);
+        setTimeout(handleRestart, 2000);
       } else {
         setIsPlayerTurn(true);
       }
@@ -176,6 +177,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       const win = checkWinner(newBoard);
       if (win) {
         setWinner(win as any);
+        // Auto restart for local/bot
+        if (!roomId) {
+          setTimeout(handleRestart, 2000);
+        }
       } else {
         setLocalTurn(localTurn === 'X' ? 'O' : 'X');
       }
@@ -189,8 +194,21 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
     const win = checkWinner(newBoard);
     if (win) {
       setWinner(win as any);
+      setTimeout(handleRestart, 2000);
     } else {
       setIsPlayerTurn(false);
+    }
+  };
+
+  const handleRestart = () => {
+    setBoard(Array(9).fill(null));
+    setWinner(null);
+    setIsPlayerTurn(true);
+    setLocalTurn('X');
+    if (roomId) {
+      // For multiplayer, we would need to reset the room state in Firestore
+      // For now, let's just close or clear local
+      onClose();
     }
   };
 
@@ -295,12 +313,20 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
                  winner === 'player' ? 'YOU WIN!' : winner === 'bot' ? 'YOU LOSE' : 'DRAW!'
               )}
             </h2>
-            <button 
-              onClick={handleEnd}
-              className="w-full py-5 bg-sky-500 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#0ea5e9] hover:bg-sky-400 active:translate-y-2 active:shadow-none transition-all mt-4 uppercase"
-            >
-              Continue
-            </button>
+            <div className="grid gap-3 mt-4">
+              <button 
+                onClick={handleRestart}
+                className="w-full py-5 bg-sky-500 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#0ea5e9] hover:bg-sky-400 active:translate-y-2 active:shadow-none transition-all uppercase"
+              >
+                Play Again
+              </button>
+              <button 
+                onClick={handleEnd}
+                className="w-full py-4 bg-slate-100 text-slate-400 font-black text-lg rounded-2xl hover:bg-slate-200 transition-all uppercase"
+              >
+                Exit Game
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

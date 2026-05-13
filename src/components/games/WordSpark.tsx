@@ -143,14 +143,15 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
 
       <div className="relative w-full max-w-md flex flex-col items-center">
         {/* Guess Slots */}
-        <div className="flex gap-2 mb-12 min-h-[80px]">
+        <div className="flex flex-wrap justify-center gap-2 mb-12 min-h-[80px]">
           {Array.from({ length: currentWord.length }).map((_, i) => (
             <motion.div
               key={i}
               layout
               onClick={() => guess[i] && removeLetter(guess[i], i)}
               className={cn(
-                "w-14 h-16 rounded-2xl flex items-center justify-center text-3xl font-black border-4 transition-all cursor-pointer",
+                "rounded-2xl flex items-center justify-center font-black border-4 transition-all cursor-pointer",
+                currentWord.length > 8 ? "w-10 h-12 text-xl" : "w-14 h-16 text-3xl",
                 guess[i] 
                   ? "bg-white text-slate-800 border-white shadow-[0_6px_0_0_#e2e8f0]" 
                   : "bg-amber-800/50 border-amber-700/50 border-dashed"
@@ -169,28 +170,38 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
               whileHover={{ scale: 1.1, y: -4 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => addLetter(char, i)}
-              className="w-14 h-16 bg-amber-400 rounded-2xl flex items-center justify-center text-3xl font-black text-amber-900 shadow-[0_6px_0_0_#b45309] active:shadow-none active:translate-y-1 transition-all"
+              className={cn(
+                "bg-amber-400 rounded-2xl flex items-center justify-center font-black text-amber-900 shadow-[0_6px_0_0_#b45309] active:shadow-none active:translate-y-1 transition-all",
+                currentWord.length > 8 ? "w-10 h-12 text-xl" : "w-14 h-16 text-3xl"
+              )}
             >
               {char}
             </motion.button>
           ))}
         </div>
 
-        {/* Action Button */}
-        <motion.button
-          disabled={guess.length !== currentWord.length || !!feedback}
-          onClick={checkGuess}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={cn(
-            "w-full py-6 rounded-[2.5rem] text-2xl font-black transition-all flex items-center justify-center gap-3",
-            guess.length === currentWord.length && !feedback
-              ? "bg-white text-amber-600 shadow-[0_10px_0_0_#e2e8f0]"
-              : "bg-white/10 text-white/20 shadow-none grayscale"
-          )}
-        >
-          {feedback === 'success' ? <Check size={32} /> : 'CHECK WORD'}
-        </motion.button>
+        <div className="grid grid-cols-[1fr_auto] gap-4 w-full">
+          <motion.button
+            disabled={guess.length !== currentWord.length || !!feedback}
+            onClick={checkGuess}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={cn(
+              "py-6 rounded-[2.5rem] text-2xl font-black transition-all flex items-center justify-center gap-3",
+              guess.length === currentWord.length && !feedback
+                ? "bg-white text-amber-600 shadow-[0_10px_0_0_#e2e8f0]"
+                : "bg-white/10 text-white/20 shadow-none grayscale"
+            )}
+          >
+            {feedback === 'success' ? <Check size={32} /> : 'CHECK WORD'}
+          </motion.button>
+          <button 
+            onClick={onClose}
+            className="px-8 py-6 rounded-[2.5rem] bg-amber-800/30 text-amber-200 font-black border-2 border-amber-700/50 hover:bg-amber-800/50 transition-all"
+          >
+            EXIT
+          </button>
+        </div>
       </div>
 
       {feedback === 'success' && (

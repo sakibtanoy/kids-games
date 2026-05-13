@@ -297,12 +297,20 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
             <div className="bg-white p-12 rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-rose-100 shadow-2xl animate-in zoom-in-95 duration-200">
               <h2 className="text-5xl font-black text-slate-800 mb-4 tracking-tighter uppercase">CRASHED!</h2>
               <p className="text-rose-500 font-bold text-2xl mb-8 italic">Distance: {Math.floor(score/10)}m</p>
-              <button 
-                onClick={() => { setGameOver(false); setScore(0); setObstacles([]); }}
-                className="w-full py-5 bg-rose-600 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#9f1239] transition-all active:translate-y-2 active:shadow-none uppercase"
-              >
-                Restart Race
-              </button>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => { setGameOver(false); setScore(0); setObstacles([]); }}
+                  className="py-5 bg-rose-600 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#9f1239] transition-all active:translate-y-2 active:shadow-none uppercase"
+                >
+                  Again
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="py-5 bg-slate-100 text-slate-500 font-black text-xl rounded-2xl border-b-8 border-slate-200 hover:bg-slate-200 active:translate-y-2 active:shadow-none transition-all uppercase"
+                >
+                  Exit
+                </button>
+              </div>
             </div>
           </div>
         )}
