@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with gaming stats and parental controls",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "totalScore": { "type": "number" },
+        "badges": { "type": "array" },
+        "achievements": { "type": "array" },
+        "friends": { "type": "array" },
+        "parentalControls": {
+          "type": "object",
+          "properties": {
+            "timeLimitMinutes": { "type": "number" },
+            "restrictedGames": { "type": "array" },
+            "isMuted": { "type": "boolean" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "totalScore"]
+    },
+    "GameScore": {
+      "title": "Game Score",
+      "description": "Individual game scores for leaderboards",
+      "type": "object",
+      "properties": {
+        "gameId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "score": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["gameId", "userId", "score"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/leaderboards/{gameId}/scores/{scoreId}": {
+      "schema": "GameScore",
+      "description": "Leaderboard scores per game"
+    }
+  }
+}

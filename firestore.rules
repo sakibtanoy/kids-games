@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Help session for connectivity check
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      // Allow read if owner or signed in
+      allow read: if isSignedIn();
+
+      function isValidUser(data) {
+        return data.keys().hasAll(['uid', 'displayName', 'totalScore', 'createdAt', 'updatedAt'])
+               && data.uid == request.auth.uid
+               && data.displayName is string
+               && data.totalScore is number;
+      }
+
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      
+      allow update: if isOwner(userId) 
+                    && (
+                      incoming().updatedAt == request.time || incoming().updatedAt == existing().updatedAt
+                    )
+                    && (
+                      incoming().diff(existing()).affectedKeys()
+                      .hasOnly(['displayName', 'avatarUrl', 'totalScore', 'badges', 'achievements', 'friends', 'parentalControls', 'updatedAt'])
+                    );
+    }
+
+    // 2. Leaderboards
+    match /leaderboards/{gameId}/scores/{scoreId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+    // 3. Multiplayer Rooms
+    match /rooms/{roomId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+  }
+}
