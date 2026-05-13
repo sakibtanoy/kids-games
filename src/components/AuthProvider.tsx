@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   onAuthStateChanged, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
+  signInAnonymously, 
   User as FirebaseUser,
   signOut
 } from 'firebase/auth';
@@ -124,11 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInAnonymously(auth);
     } catch (error) {
-      console.error("Sign in failed", error);
+      console.error("Anonymous sign in failed", error);
     } finally {
       setIsSigningIn(false);
     }
