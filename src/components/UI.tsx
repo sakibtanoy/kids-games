@@ -35,48 +35,48 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { user, profile } = useAuth();
 
   return (
-    <header className="mb-6 bg-white rounded-3xl p-4 shadow-[0_8px_0_0_#e0e7ff] border-2 border-indigo-200 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-yellow-400 rounded-2xl flex items-center justify-center border-b-4 border-yellow-600 shadow-lg group">
+    <header className="mb-4 bg-white rounded-3xl p-2.5 md:p-4 shadow-[0_8px_0_0_#e0e7ff] border-2 border-indigo-200 flex items-center justify-between">
+      <div className="flex items-center gap-3 md:gap-4">
+        <div className="w-10 h-10 md:w-14 md:h-14 bg-yellow-400 rounded-2xl flex items-center justify-center border-b-4 border-yellow-600 shadow-lg group">
           <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}>
-            <Rocket className="text-white fill-white" size={32} />
+            <Rocket className="text-white fill-white" size={24} />
           </motion.div>
         </div>
         <div>
-          <h1 className="text-3xl font-black text-indigo-900 tracking-tight leading-none">KIDDO HUB</h1>
-          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mt-1">
+          <h1 className="text-xl md:text-3xl font-black text-indigo-900 tracking-tight leading-none">KIDDO HUB</h1>
+          <p className="text-[8px] md:text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mt-1">
             {profile ? `Level ${Math.floor((profile.totalScore / 500) + 1)} • Galactic Explorer` : 'Welcome Hero!'}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 md:gap-6">
+      <div className="flex items-center gap-2 md:gap-6">
         {user ? (
           <>
-            <div className="bg-orange-100 rounded-full px-5 py-2 hidden md:flex items-center gap-3 border-2 border-orange-200">
-              <Star className="text-orange-500 fill-orange-500" size={18} />
-              <span className="text-lg font-black text-orange-600">{profile?.totalScore || 0}</span>
+            <div className="bg-orange-100 rounded-full px-4 py-1.5 hidden md:flex items-center gap-3 border-2 border-orange-200">
+              <Star className="text-orange-500 fill-orange-500" size={16} />
+              <span className="text-base font-black text-orange-600">{profile?.totalScore || 0}</span>
             </div>
             
-            <div className="flex items-center gap-2 bg-indigo-900 text-white rounded-full px-4 py-2 border-b-4 border-indigo-950 cursor-pointer hover:bg-slate-800 transition-colors" onClick={onOpenSettings}>
-              <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                <ShieldCheck size={16} />
+            <div className="flex items-center gap-2 bg-indigo-900 text-white rounded-full px-3 py-1.5 md:px-4 md:py-2 border-b-4 border-indigo-950 cursor-pointer hover:bg-slate-800 transition-colors" onClick={onOpenSettings}>
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                <ShieldCheck size={14} />
               </div>
-              <span className="font-bold text-xs uppercase tracking-wider hidden sm:inline">Parent Zone</span>
+              <span className="font-bold text-[10px] md:text-xs uppercase tracking-wider hidden sm:inline">Parent Zone</span>
             </div>
 
-            <div className="w-12 h-12 bg-pink-500 rounded-full border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-pink-500 rounded-full border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
               {user.photoURL ? (
                 <img src={user.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <span className="text-2xl">🐯</span>
+                <span className="text-xl md:text-2xl">🐯</span>
               )}
             </div>
           </>
         ) : (
           <button 
             onClick={() => useAuth().signIn()}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-[0_4px_0_0_#3730a3] hover:bg-indigo-500 transition-all"
+            className="bg-indigo-600 text-white px-6 py-2.5 md:px-8 md:py-3 rounded-2xl font-black shadow-[0_4px_0_0_#3730a3] hover:bg-indigo-500 transition-all text-sm md:text-base"
           >
             START
           </button>

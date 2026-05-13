@@ -28,15 +28,20 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
 
   const createRoom = async () => {
     if (!user || !profile) return;
-    const newCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const payload = {
-      host: user.uid,
-      status: 'waiting',
-      players: [{ uid: user.uid, name: profile.displayName }],
-      createdAt: Date.now()
-    };
-    await setDoc(doc(db, 'rooms', newCode), payload);
-    setRoomData({ id: newCode, ...payload });
+    try {
+      const newCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const payload = {
+        host: user.uid,
+        status: 'waiting',
+        players: [{ uid: user.uid, name: profile.displayName }],
+        createdAt: Date.now()
+      };
+      await setDoc(doc(db, 'rooms', newCode), payload);
+      setRoomData({ id: newCode, ...payload });
+    } catch (error) {
+      console.error("Create room failed", error);
+      alert("Could not create room. Please try again.");
+    }
   };
 
   const joinRoom = async (e: React.FormEvent) => {
@@ -47,13 +52,21 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
       const code = roomId.toUpperCase();
       const r = await getDoc(doc(db, 'rooms', code));
       if (r.exists()) {
+        const data = r.data();
+        if (data.players.some((p: any) => p.uid === user.uid)) {
+           setRoomData({ id: code, ...data });
+           return;
+        }
         await updateDoc(doc(db, 'rooms', code), {
           players: arrayUnion({ uid: user.uid, name: profile.displayName })
         });
-        setRoomData({ id: code, ...r.data(), players: [...r.data().players, { uid: user.uid, name: profile.displayName }] });
+        setRoomData({ id: code, ...data, players: [...data.players, { uid: user.uid, name: profile.displayName }] });
       } else {
         alert('Room not found');
       }
+    } catch (error) {
+      console.error("Join room failed", error);
+      alert("Could not join room. Make sure the code is correct.");
     } finally {
       setIsJoining(false);
     }
@@ -61,10 +74,16 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
 
   const startGame = async (gameId: string) => {
     if (!roomData || roomData.host !== user?.uid) return;
-    await updateDoc(doc(db, 'rooms', roomData.id), {
-      status: 'playing',
-      gameId
-    });
+    try {
+      await updateDoc(doc(db, 'rooms', roomData.id), {
+        status: 'playing',
+        gameId
+      });
+      document.documentElement.requestFullscreen().catch(() => {});
+    } catch (error) {
+      console.error("Start game failed", error);
+      alert("Failed to start game.");
+    }
   };
 
   if (roomData) {

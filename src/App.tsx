@@ -147,7 +147,10 @@ function Dashboard() {
                       key={game.id} 
                       game={game} 
                       isRestricted={restrictedGames.includes(game.id)}
-                      onClick={() => setActiveGame(game.id)} 
+                      onClick={() => {
+                        setActiveGame(game.id);
+                        document.documentElement.requestFullscreen().catch(() => {});
+                      }} 
                     />
                   ))}
                 </div>
@@ -168,7 +171,10 @@ function Dashboard() {
                       <p className="text-2xl font-black text-yellow-400">+500 XP</p>
                     </div>
                     <button 
-                      onClick={() => setActiveGame('math-quest')}
+                      onClick={() => {
+                        setActiveGame('math-quest');
+                        document.documentElement.requestFullscreen().catch(() => {});
+                      }}
                       className="bg-yellow-400 text-indigo-900 px-10 py-4 rounded-[2rem] font-black shadow-[0_8px_0_0_#ca8a04] hover:bg-yellow-300 active:shadow-none active:translate-y-2 transition-all uppercase tracking-wider"
                     >
                       START NOW
