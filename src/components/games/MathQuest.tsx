@@ -104,8 +104,7 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
           setLives(l => {
             const next = l - 1;
             if (next <= 0) {
-              onScoreSubmit(score);
-              onClose();
+              setShowResult(true);
             } else {
               setTimeout(() => {
                 setFeedback(null);
@@ -144,12 +143,12 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
         } else {
           setTimeout(() => {
             setFeedback(null);
+            setTimeLeft(maxTime); // Reset timer here
             generateProblem(level, difficulty);
           }, 1000);
         }
         return next;
       });
-      setTimeout(() => setFeedback(null), 1000);
     }
   };
 
@@ -158,7 +157,10 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
     setScore(0);
     setLives(3);
     setShowResult(false);
-    setTimeLeft(maxTime);
+    setFeedback(null);
+    const initialTime = difficulty === 'easy' ? 30 : difficulty === 'pro' ? 20 : 10;
+    setTimeLeft(initialTime);
+    setMaxTime(initialTime);
     generateProblem(1, difficulty);
   };
 

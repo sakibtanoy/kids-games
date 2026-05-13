@@ -5,6 +5,8 @@ import { Hash, X, Circle, Users } from 'lucide-react';
 import { useAuth } from '../AuthProvider';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { cn } from '../../lib/utils';
+
 
 export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreSubmit: (score: number) => void, onClose: () => void, roomId?: string | null }) {
   const { user } = useAuth();
@@ -12,6 +14,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
   const [isPlayerTurn, setIsPlayerTurn] = useState<boolean>(true);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | 'local' | null>(roomId ? 'legend' : null);
   const [winner, setWinner] = useState<'player' | 'bot' | 'player1' | 'player2' | 'draw' | null>(null);
+  const [winningLine, setWinningLine] = useState<number[] | null>(null);
   const [localTurn, setLocalTurn] = useState<'X' | 'O'>('X');
   
   // Realtime state
@@ -35,7 +38,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
           setCurrentTurnStr('X');
         }
       }
+    }, (err) => {
+      console.error("TicTacToe Firestore Error:", err);
     });
+
     return unsub;
   }, [roomId, user?.uid]);
 
@@ -48,19 +54,22 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        if (difficulty === 'local') return squares[a] === 'X' ? 'player1' : 'player2';
-        return squares[a] === 'X' ? 'player' : 'bot';
+        let winType: 'player' | 'bot' | 'player1' | 'player2' | 'draw' = 'draw';
+        if (difficulty === 'local') winType = squares[a] === 'X' ? 'player1' : 'player2';
+        else winType = squares[a] === 'X' ? 'player' : 'bot';
+        return { type: winType, line: [a, b, c] };
       }
     }
-    if (!squares.includes(null)) return 'draw';
+    if (!squares.includes(null)) return { type: 'draw' as const, line: null };
     return null;
   };
 
   const getBestMove = (squares: (string | null)[], depth = 0, isMaximizing = true): number => {
     const result = checkWinner(squares);
-    if (result === 'bot') return 10 - depth;
-    if (result === 'player') return depth - 10;
-    if (result === 'draw') return 0;
+    if (!result) return 0;
+    if (result.type === 'bot') return 10 - depth;
+    if (result.type === 'player') return depth - 10;
+    if (result.type === 'draw') return 0;
     
     if (depth > (difficulty === 'pro' ? 2 : difficulty === 'legend' ? 10 : 0)) {
       return 0; // limit depth for lower difficulties
@@ -126,8 +135,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       setBoard(newBoard);
       const win = checkWinner(newBoard);
       if (win) {
-        setWinner(win);
-        setTimeout(handleRestart, 2000);
+        if (win.line) setWinningLine(win.line);
+        setTimeout(() => {
+          setWinner(win.type as any);
+        }, 1000);
       } else {
         setIsPlayerTurn(true);
       }
@@ -150,24 +161,28 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       newBoard[index] = remotePlayerSymbol;
       setBoard(newBoard);
       const winStatus = checkWinner(newBoard);
-      
       let nextWinner = null;
       if (winStatus) {
-        nextWinner = winStatus === 'draw' ? 'draw' : (winStatus === 'player') ? 'X' : 'O'; 
-        setWinner(nextWinner as any);
+        nextWinner = winStatus.type === 'draw' ? 'draw' : (winStatus.type === 'player' ? 'X' : 'O');
+        setWinner(winStatus.type as any);
       }
       
       const nextTurnStr = currentTurnStr === 'X' ? 'O' : 'X';
       setCurrentTurnStr(nextTurnStr);
       
-      await updateDoc(doc(db, 'rooms', roomId), {
-        tictactoe: {
-           tBoard: newBoard,
-           turn: nextTurnStr,
-           tWinner: nextWinner
-        }
-      });
+      try {
+        await updateDoc(doc(db, 'rooms', roomId), {
+          tictactoe: {
+             tBoard: newBoard,
+             turn: nextTurnStr,
+             tWinner: nextWinner
+          }
+        });
+      } catch (err) {
+        console.error("Failed to update TicTacToe room:", err);
+      }
       return;
+
     }
 
     if (difficulty === 'local') {
@@ -176,11 +191,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
       setBoard(newBoard);
       const win = checkWinner(newBoard);
       if (win) {
-        setWinner(win as any);
-        // Auto restart for local/bot
-        if (!roomId) {
-          setTimeout(handleRestart, 2000);
-        }
+        if (win.line) setWinningLine(win.line);
+        setTimeout(() => {
+          setWinner(win.type as any);
+        }, 1000);
       } else {
         setLocalTurn(localTurn === 'X' ? 'O' : 'X');
       }
@@ -193,8 +207,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
     setBoard(newBoard);
     const win = checkWinner(newBoard);
     if (win) {
-      setWinner(win as any);
-      setTimeout(handleRestart, 2000);
+      if (win.line) setWinningLine(win.line);
+      setTimeout(() => {
+        setWinner(win.type as any);
+      }, 1000);
     } else {
       setIsPlayerTurn(false);
     }
@@ -203,11 +219,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
   const handleRestart = () => {
     setBoard(Array(9).fill(null));
     setWinner(null);
+    setWinningLine(null);
     setIsPlayerTurn(true);
     setLocalTurn('X');
     if (roomId) {
-      // For multiplayer, we would need to reset the room state in Firestore
-      // For now, let's just close or clear local
       onClose();
     }
   };
@@ -261,13 +276,13 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
         <h2 className="text-4xl font-black text-white tracking-widest uppercase mb-2">Tic Tac Toe</h2>
         <p className="text-sky-300 font-bold tracking-widest uppercase">
           {roomId ? (
-            winner ? (winner === 'draw' ? 'DRAW!' : winner === remotePlayerSymbol ? 'YOU WON!' : 'THEY WON!') 
+            winner ? (winner === 'draw' ? 'DRAW!' : (winner === 'player' ? 'YOU WON!' : 'THEY WON!')) 
             : (currentTurnStr === remotePlayerSymbol ? 'Your Turn' : "Opponent's Turn")
           ) : difficulty === 'local' ? (
-            winner ? (winner === 'draw' ? 'DRAW!' : winner === 'player1' ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!')
+            winner ? (winner === 'draw' ? 'DRAW!' : (winner === 'player1' ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!'))
             : `Player ${localTurn === 'X' ? '1' : '2'}'s Turn`
           ) : (
-            winner ? (winner === 'player' ? 'YOU WON!' : winner === 'bot' ? 'BOT WON!' : 'DRAW!') 
+            winner ? (winner === 'player' ? 'YOU WON!' : (winner === 'bot' ? 'BOT WON!' : 'DRAW!')) 
             : (isPlayerTurn ? 'Your Turn' : "Bot's Turn")
           )}
         </p>
@@ -280,7 +295,10 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
               key={i}
               onClick={() => handleCellClick(i)}
               disabled={roomId ? (currentTurnStr !== remotePlayerSymbol || !!cell || !!winner) : (!isPlayerTurn || !!cell || !!winner)}
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white/20 hover:bg-white/30 disabled:hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
+              className={cn(
+                "w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-2xl flex items-center justify-center transition-all duration-500",
+                winningLine?.includes(i) ? "bg-emerald-500 scale-105 shadow-[0_0_20px_rgba(16,185,129,0.5)]" : "bg-white/20 hover:bg-white/30 disabled:hover:bg-white/20"
+              )}
             >
               <AnimatePresence>
                 {cell === 'X' && (
