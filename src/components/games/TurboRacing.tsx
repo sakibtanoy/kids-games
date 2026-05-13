@@ -5,37 +5,65 @@ import { cn } from '../../lib/utils';
 
 function CarModel({ color, design, className }: { color: string, design: string, className?: string }) {
   return (
-    <div 
-      className={cn("w-12 h-20 rounded-xl shadow-2xl relative transition-all duration-300", className)}
-      style={{ backgroundColor: color, borderBottom: '8px solid rgba(0,0,0,0.2)' }}
-    >
-      {/* Windshield */}
-      <div className="absolute top-1 left-1.5 right-1.5 h-3 bg-slate-800/40 rounded-t-lg backdrop-blur-sm" />
-      
-      {/* Racing Stripe */}
-      {design === 'sport' && (
-        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-3 bg-white/20" />
-      )}
-      
-      {/* Stealth Lines */}
-      {design === 'stealth' && (
-        <>
-          <div className="absolute top-6 left-0 w-full h-px bg-black/10" />
-          <div className="absolute top-12 left-0 w-full h-px bg-black/10" />
-        </>
-      )}
+    <div className={cn("w-12 h-20 relative transition-all duration-300", className)}>
+      {/* Main Body Shape */}
+      <div 
+        className={cn(
+          "absolute inset-0 shadow-2xl transition-all duration-300",
+          design === 'classic' ? "rounded-2xl" : design === 'sport' ? "rounded-lg" : "rounded-t-[2.5rem] rounded-b-lg"
+        )}
+        style={{ 
+          backgroundColor: color, 
+          borderBottom: '6px solid rgba(0,0,0,0.2)',
+          clipPath: design === 'stealth' ? 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)' : 'none'
+        }}
+      >
+        {/* Windshield */}
+        <div className={cn(
+          "absolute left-1.5 right-1.5 h-4 bg-slate-800/60 backdrop-blur-sm",
+          design === 'classic' ? "top-2 rounded-t-xl" : design === 'sport' ? "top-1 rounded-t-sm" : "top-0 rounded-t-[2rem]"
+        )} />
+        
+        {/* Racing Stripes for Sport */}
+        {design === 'sport' && (
+          <>
+            <div className="absolute inset-y-0 left-3 w-1 bg-white/20" />
+            <div className="absolute inset-y-0 right-3 w-1 bg-white/20" />
+          </>
+        )}
+        
+        {/* Hood Detail for Classic */}
+        {design === 'classic' && (
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 w-6 h-3 bg-black/5 rounded-full" />
+        )}
 
-      {/* Spoiler */}
-      {(design === 'sport' || design === 'stealth') && (
-        <div className="absolute -bottom-2 -left-1 -right-1 h-3 bg-inherit rounded-full shadow-lg brightness-75" />
+        {/* Roof detail */}
+        <div className={cn(
+          "absolute bg-white/10 rounded-lg",
+          design === 'classic' ? "top-8 left-3 right-3 bottom-5" : 
+          design === 'sport' ? "top-6 left-2.5 right-2.5 bottom-4" : 
+          "top-6 left-4 right-4 bottom-8 bg-black/20"
+        )} />
+      </div>
+
+      {/* Accessories (Outside Body to avoid clipping) */}
+      
+      {/* Spoiler / Wings */}
+      {design === 'sport' && (
+        <div 
+          className="absolute -bottom-2 -left-2 -right-2 h-4 rounded-sm shadow-xl border-t-2 border-white/20" 
+          style={{ backgroundColor: color, filter: 'brightness(0.8)' }}
+        />
+      )}
+      {design === 'stealth' && (
+        <div className="absolute -bottom-1 left-1 right-1 h-3 bg-slate-900 rounded-b-xl opacity-60" />
       )}
 
       {/* Headlights */}
-      <div className="absolute top-1 left-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
-      <div className="absolute top-1 right-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
-      
-      {/* Roof detail */}
-      <div className="absolute top-6 left-2 right-2 bottom-4 bg-white/10 rounded-lg" />
+      <div className="absolute top-1 left-1.5 right-1.5 flex justify-between">
+        <div className={cn("w-3 h-4 bg-white/90 shadow-[0_0_15px_#fff]", design === 'classic' ? "rounded-full" : "rounded-sm")} />
+        <div className={cn("w-3 h-4 bg-white/90 shadow-[0_0_15px_#fff]", design === 'classic' ? "rounded-full" : "rounded-sm")} />
+      </div>
     </div>
   );
 }
