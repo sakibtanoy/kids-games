@@ -7,69 +7,72 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
-  const [problem, setProblem] = useState({ a: 0, b: 0, op: '+', answer: 0, options: [0] });
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [maxTime, setMaxTime] = useState(30);
 
   const generateProblem = (currentLevel: number, currentDifficulty: 'easy' | 'pro' | 'legend' | null) => {
     if (!currentDifficulty) return;
     
-    let ops = ['+', '-'];
-    if (currentDifficulty !== 'easy') ops.push('*');
-    if (currentDifficulty === 'legend') ops.push('/');
-
-    const op = ops[Math.floor(Math.random() * ops.length)];
     let a = 0, b = 0;
-    
-    if (currentDifficulty === 'easy') {
-       if (op === '+' || op === '-') {
-         a = Math.floor(Math.random() * 20) + 1;
-         b = Math.floor(Math.random() * 20) + 1;
-       } else {
-         a = Math.floor(Math.random() * 5) + 1;
-         b = Math.floor(Math.random() * 5) + 1;
-       }
-    } else if (currentDifficulty === 'pro') {
-       if (op === '+' || op === '-') {
-         a = Math.floor(Math.random() * 999) + 1;
-         b = Math.floor(Math.random() * 999) + 1;
-       } else {
-         a = Math.floor(Math.random() * 20) + 1;
-         b = Math.floor(Math.random() * 20) + 1;
-       }
-    } else { // legend
-       if (op === '+' || op === '-') {
-         a = Math.floor(Math.random() * 9999) + 1000;
-         b = Math.floor(Math.random() * 9999) + 1000;
-       } else if (op === '*') {
-         a = Math.floor(Math.random() * 99) + 10;
-         b = Math.floor(Math.random() * 99) + 10;
-       }
-    }
+    let ops = ['+', '-'];
 
-    if (op === '-' && a < b) [a, b] = [b, a];
-    
-    if (op === '/') {
-      if (currentDifficulty === 'easy') {
-        b = Math.floor(Math.random() * 5) + 1;
-        a = b * (Math.floor(Math.random() * 5) + 1);
-      } else if (currentDifficulty === 'pro') {
-        b = Math.floor(Math.random() * 20) + 1;
-        a = b * (Math.floor(Math.random() * 20) + 1);
-      } else {
-        b = Math.floor(Math.random() * 99) + 2;
-        a = b * (Math.floor(Math.random() * 50) + 5);
-      }
+    if (currentDifficulty === 'easy') {
+       ops.push('*', '/'); 
+       const op = ops[Math.floor(Math.random() * ops.length)];
+       if (op === '+' || op === '-') {
+         a = Math.floor(Math.random() * 20) + 1;
+         b = Math.floor(Math.random() * 20) + 1;
+       } else if (op === '*') {
+         a = Math.floor(Math.random() * 10) + 1;
+         b = Math.floor(Math.random() * 10) + 1;
+       } else {
+         b = Math.floor(Math.random() * 10) + 1;
+         a = b * (Math.floor(Math.random() * 5) + 1);
+       }
+       const ans = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+       setProblemData(a, b, op, ans, currentDifficulty);
+    } else if (currentDifficulty === 'pro') {
+       ops.push('*', '/');
+       const op = ops[Math.floor(Math.random() * ops.length)];
+       if (op === '+' || op === '-') {
+         a = Math.floor(Math.random() * 100) + 1; 
+         b = Math.floor(Math.random() * 100) + 1;
+       } else if (op === '*') {
+         a = Math.floor(Math.random() * 12) + 2;
+         b = Math.floor(Math.random() * 12) + 2;
+       } else {
+         b = Math.floor(Math.random() * 12) + 2;
+         a = b * (Math.floor(Math.random() * 10) + 1);
+       }
+       const ans = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+       setProblemData(a, b, op, ans, currentDifficulty);
+    } else { // legend
+       ops.push('*', '/');
+       const op = ops[Math.floor(Math.random() * ops.length)];
+       if (op === '+' || op === '-') {
+         a = Math.floor(Math.random() * 500) + 100;
+         b = Math.floor(Math.random() * 500) + 100;
+       } else if (op === '*') {
+         a = Math.floor(Math.random() * 20) + 5;
+         b = Math.floor(Math.random() * 20) + 5;
+       } else {
+         b = Math.floor(Math.random() * 20) + 2;
+         a = b * (Math.floor(Math.random() * 15) + 1);
+       }
+       const ans = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+       setProblemData(a, b, op, ans, currentDifficulty);
     }
-    
-    const ans = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+  };
+
+  const setProblemData = (a: number, b: number, op: string, ans: number, diff: string) => {
+    if (op === '-' && a < b) [a, b] = [b, a];
     const options = new Set<number>([ans]);
-    
-    const offsetRange = currentDifficulty === 'legend' ? 1000 : currentDifficulty === 'pro' ? 100 : 10;
+    const offsetRange = diff === 'legend' ? 50 : diff === 'pro' ? 20 : 10;
     
     while (options.size < 4) {
       let wrongAns = ans + (Math.floor(Math.random() * offsetRange) - offsetRange / 2);
-      if (wrongAns === ans) wrongAns += 1;
+      if (wrongAns === ans || wrongAns < 0) wrongAns = ans + Math.floor(Math.random() * 10) + 1;
       options.add(wrongAns);
     }
     
@@ -81,9 +84,28 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
 
   useEffect(() => {
     if (difficulty) {
+      const time = difficulty === 'easy' ? 30 : difficulty === 'pro' ? 20 : 10;
+      setTimeLeft(time);
+      setMaxTime(time);
       generateProblem(level, difficulty);
     }
   }, [difficulty]);
+
+  useEffect(() => {
+    if (!difficulty || feedback || lives <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timer);
+          onScoreSubmit(score);
+          onClose();
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [difficulty, feedback, level, lives]);
 
   const handleAnswer = (choice: number) => {
     if (feedback) return;
@@ -94,6 +116,7 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
       setTimeout(() => {
         setFeedback(null);
         setLevel(l => l + 1);
+        setTimeLeft(maxTime); // Reset timer
         generateProblem(level + 1, difficulty);
       }, 1000);
     } else {
@@ -160,23 +183,37 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
       </div>
 
       {/* Header */}
-      <div className="w-full max-w-xl flex items-center justify-between mb-12 relative z-10">
-        <div className="flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Heart 
-              key={i} 
-              className={cn("transition-all duration-500", i < lives ? "text-rose-500 fill-rose-500 scale-110" : "text-white/20")} 
-              size={32} 
-            />
-          ))}
+      <div className="w-full max-w-xl flex flex-col gap-4 mb-8 relative z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Heart 
+                key={i} 
+                className={cn("transition-all duration-500", i < lives ? "text-rose-500 fill-rose-500 scale-110" : "text-white/20")} 
+                size={24} 
+              />
+            ))}
+          </div>
+          <div className="text-center">
+            <p className="text-emerald-300 font-black tracking-widest text-xs">LEVEL {level}</p>
+            <h2 className="text-white font-black text-2xl">{score}</h2>
+          </div>
+          <button onClick={onClose} className="p-2 bg-white/10 rounded-xl text-white">
+            <X size={20} />
+          </button>
         </div>
-        <div className="text-center">
-          <p className="text-emerald-300 font-black tracking-widest text-xs">LEVEL {level}</p>
-          <h2 className="text-white font-black text-4xl text-shadow-lg">{score}</h2>
+        
+        {/* Timer Bar */}
+        <div className="w-full h-4 bg-emerald-950/50 rounded-full overflow-hidden border-2 border-white/10">
+          <motion.div 
+            initial={{ width: '100%' }}
+            animate={{ width: `${(timeLeft / maxTime) * 100}%` }}
+            className={cn(
+              "h-full transition-colors",
+              timeLeft < 5 ? "bg-rose-500" : "bg-yellow-400"
+            )}
+          />
         </div>
-        <button onClick={onClose} className="p-3 bg-white/10 rounded-2xl text-white">
-          <X size={24} />
-        </button>
       </div>
 
       {/* Problem Card */}
