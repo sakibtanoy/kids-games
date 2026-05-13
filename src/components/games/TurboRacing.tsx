@@ -42,7 +42,7 @@ function CarModel({ color, design, className }: { color: string, design: string,
 
 export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit: (score: number) => void, onClose: () => void }) {
   const [playerX, setPlayerX] = useState(50);
-  const [obstacles, setObstacles] = useState<{ id: number, x: number, y: number, color: string }[]>([]);
+  const [obstacles, setObstacles] = useState<{ id: number, x: number, y: number, color: string, design: 'classic' | 'sport' | 'stealth' }[]>([]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
@@ -83,7 +83,8 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
               id: Math.random(),
               x: getLaneX(lane),
               y: -15,
-              color: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#a855f7'][Math.floor(Math.random() * 5)]
+              color: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#a855f7'][Math.floor(Math.random() * 5)],
+              design: (['classic', 'sport', 'stealth'] as const)[Math.floor(Math.random() * 3)]
             });
           }
         }
@@ -251,15 +252,15 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
       {obstacles.map(o => (
         <div
           key={o.id}
-          className="absolute w-12 h-20 rounded-xl border-b-8 shadow-lg"
+          className="absolute"
           style={{ 
             left: `${o.x}%`, 
             top: `${o.y}%`, 
-            backgroundColor: o.color,
-            borderColor: 'rgba(0,0,0,0.2)',
-            transform: 'translateX(-50%)' 
+            transform: 'translateX(-50%) rotate(180deg)' 
           }}
-        />
+        >
+          <CarModel color={o.color} design={o.design} />
+        </div>
       ))}
 
       <AnimatePresence>
