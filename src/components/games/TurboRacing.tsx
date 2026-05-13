@@ -3,6 +3,43 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Car, X, Trophy, FastForward } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+function CarModel({ color, design, className }: { color: string, design: string, className?: string }) {
+  return (
+    <div 
+      className={cn("w-12 h-20 rounded-xl shadow-2xl relative transition-all duration-300", className)}
+      style={{ backgroundColor: color, borderBottom: '8px solid rgba(0,0,0,0.2)' }}
+    >
+      {/* Windshield */}
+      <div className="absolute top-1 left-1.5 right-1.5 h-3 bg-slate-800/40 rounded-t-lg backdrop-blur-sm" />
+      
+      {/* Racing Stripe */}
+      {design === 'sport' && (
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-3 bg-white/20" />
+      )}
+      
+      {/* Stealth Lines */}
+      {design === 'stealth' && (
+        <>
+          <div className="absolute top-6 left-0 w-full h-px bg-black/10" />
+          <div className="absolute top-12 left-0 w-full h-px bg-black/10" />
+        </>
+      )}
+
+      {/* Spoiler */}
+      {(design === 'sport' || design === 'stealth') && (
+        <div className="absolute -bottom-2 -left-1 -right-1 h-3 bg-inherit rounded-full shadow-lg brightness-75" />
+      )}
+
+      {/* Headlights */}
+      <div className="absolute top-1 left-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
+      <div className="absolute top-1 right-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
+      
+      {/* Roof detail */}
+      <div className="absolute top-6 left-2 right-2 bottom-4 bg-white/10 rounded-lg" />
+    </div>
+  );
+}
+
 export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit: (score: number) => void, onClose: () => void }) {
   const [playerX, setPlayerX] = useState(50);
   const [obstacles, setObstacles] = useState<{ id: number, x: number, y: number, color: string }[]>([]);
@@ -90,34 +127,55 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
           <Car size={64} className="text-rose-500 mx-auto mb-4" />
           <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Turbo Racing</h2>
           
-          <div className="mb-8">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Choose Your Ride</p>
-            <div className="flex justify-center gap-3 mb-4">
-              {['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#a855f7'].map(color => (
-                <button
-                  key={color}
-                  onClick={() => setCarColor(color)}
-                  className={cn(
-                    "w-10 h-10 rounded-full border-4 transition-all scale-110 hover:scale-125",
-                    carColor === color ? "border-slate-800" : "border-transparent"
-                  )}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+          <div className="mb-8 flex flex-col md:flex-row items-center gap-8 bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100">
+            {/* Showroom Preview */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-rose-500/10 blur-3xl group-hover:bg-rose-500/20 transition-all" />
+              <motion.div
+                key={`${carColor}-${carDesign}`}
+                initial={{ rotate: -10, scale: 0.8 }}
+                animate={{ rotate: 5, scale: 1.2 }}
+                className="relative z-10"
+              >
+                <CarModel color={carColor} design={carDesign} className="w-16 h-28" />
+              </motion.div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(['classic', 'sport', 'stealth'] as const).map(design => (
-                <button
-                  key={design}
-                  onClick={() => setCarDesign(design)}
-                  className={cn(
-                    "py-2 px-3 rounded-xl text-[10px] font-black uppercase border-2 transition-all",
-                    carDesign === design ? "bg-slate-800 text-white border-slate-800" : "bg-slate-50 text-slate-400 border-slate-100"
-                  )}
-                >
-                  {design}
-                </button>
-              ))}
+
+            <div className="flex-1 w-full space-y-6">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 text-left">Paint Color</p>
+                <div className="flex justify-start gap-2">
+                  {['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#a855f7'].map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setCarColor(color)}
+                      className={cn(
+                        "w-8 h-8 rounded-full border-4 transition-all hover:scale-110",
+                        carColor === color ? "border-slate-800 scale-110" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 text-left">Body Design</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['classic', 'sport', 'stealth'] as const).map(design => (
+                    <button
+                      key={design}
+                      onClick={() => setCarDesign(design)}
+                      className={cn(
+                        "py-2 px-1 rounded-xl text-[9px] font-black uppercase border-2 transition-all",
+                        carDesign === design ? "bg-slate-800 text-white border-slate-800 shadow-md" : "bg-white text-slate-400 border-slate-100"
+                      )}
+                    >
+                      {design}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -186,38 +244,7 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
           transform: 'translateX(-50%)'
         }}
       >
-        <div 
-          className="w-12 h-20 rounded-xl shadow-2xl relative transition-colors duration-300"
-          style={{ backgroundColor: carColor, borderBottom: '8px solid rgba(0,0,0,0.2)' }}
-        >
-          {/* Windshield */}
-          <div className="absolute top-1 left-1.5 right-1.5 h-3 bg-slate-800/40 rounded-t-lg backdrop-blur-sm" />
-          
-          {/* Racing Stripe */}
-          {carDesign === 'sport' && (
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-3 bg-white/20" />
-          )}
-          
-          {/* Stealth Lines */}
-          {carDesign === 'stealth' && (
-            <>
-              <div className="absolute top-6 left-0 w-full h-px bg-black/10" />
-              <div className="absolute top-12 left-0 w-full h-px bg-black/10" />
-            </>
-          )}
-
-          {/* Spoiler */}
-          {(carDesign === 'sport' || carDesign === 'stealth') && (
-            <div className="absolute -bottom-2 -left-1 -right-1 h-3 bg-inherit rounded-full shadow-lg brightness-75" />
-          )}
-
-          {/* Headlights */}
-          <div className="absolute top-1 left-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
-          <div className="absolute top-1 right-1 w-2.5 h-5 bg-white rounded-sm shadow-[0_0_15px_#fff] opacity-80" />
-          
-          {/* Roof detail */}
-          <div className="absolute top-6 left-2 right-2 bottom-4 bg-white/10 rounded-lg" />
-        </div>
+        <CarModel color={carColor} design={carDesign} />
       </div>
 
       {/* Traffic */}
