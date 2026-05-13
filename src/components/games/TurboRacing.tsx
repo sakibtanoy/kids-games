@@ -57,13 +57,13 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
   }, [difficulty, gameOver, score]);
 
   useEffect(() => {
-    const playerRect = { x: playerX - 3, y: 75, width: 6, height: 12 };
+    const playerRect = { x: playerX - 2, y: 76, width: 4, height: 10 };
     for (const o of obstacles) {
       if (
-        playerRect.x < o.x + 4 &&
-        playerRect.x + playerRect.width > o.x - 4 &&
-        playerRect.y < o.y + 12 &&
-        playerRect.y + playerRect.height > o.y + 2
+        playerRect.x < o.x + 2 &&
+        playerRect.x + playerRect.width > o.x - 2 &&
+        playerRect.y < o.y + 10 &&
+        playerRect.y + playerRect.height > o.y
       ) {
         setGameOver(true);
         onScoreSubmit(score);
@@ -148,8 +148,7 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
         className="absolute bottom-24 z-10"
         style={{ 
           left: `${playerX}%`, 
-          transform: 'translateX(-50%)',
-          transition: 'left 0.1s ease-out' 
+          transform: 'translateX(-50%)'
         }}
       >
         <div className="w-12 h-20 bg-rose-500 rounded-xl border-b-8 border-rose-700 shadow-2xl relative">
