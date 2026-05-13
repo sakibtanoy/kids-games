@@ -37,13 +37,13 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
   }, [difficulty, gameOver, score]);
 
   useEffect(() => {
-    const playerRect = { x: playerX - 5, y: 80, width: 10, height: 15 };
+    const playerRect = { x: playerX - 3, y: 75, width: 6, height: 12 };
     for (const o of obstacles) {
       if (
-        playerRect.x < o.x + 8 &&
-        playerRect.x + playerRect.width > o.x &&
+        playerRect.x < o.x + 4 &&
+        playerRect.x + playerRect.width > o.x - 4 &&
         playerRect.y < o.y + 12 &&
-        playerRect.y + playerRect.height > o.y
+        playerRect.y + playerRect.height > o.y + 2
       ) {
         setGameOver(true);
         onScoreSubmit(score);

@@ -230,24 +230,24 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
         </p>
       </div>
 
-      <div className="bg-white/10 p-6 rounded-[3rem] backdrop-blur-xl border-4 border-white/20 shadow-2xl">
-        <div className="grid grid-cols-3 gap-3">
+      <div className="bg-white/10 p-3 sm:p-6 rounded-[2.5rem] md:rounded-[3rem] backdrop-blur-xl border-4 border-white/20 shadow-2xl">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           {board.map((cell, i) => (
             <button
               key={i}
               onClick={() => handleCellClick(i)}
               disabled={roomId ? (currentTurnStr !== remotePlayerSymbol || !!cell || !!winner) : (!isPlayerTurn || !!cell || !!winner)}
-              className="w-24 h-24 md:w-32 md:h-32 bg-white/20 hover:bg-white/30 disabled:hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
+              className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 bg-white/20 hover:bg-white/30 disabled:hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
             >
               <AnimatePresence>
                 {cell === 'X' && (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                    <X size={64} className="text-white" strokeWidth={3} />
+                    <X className="text-white w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16" strokeWidth={3} />
                   </motion.div>
                 )}
                 {cell === 'O' && (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                    <Circle size={56} className="text-sky-300" strokeWidth={4} />
+                    <Circle className="text-sky-300 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14" strokeWidth={4} />
                   </motion.div>
                 )}
               </AnimatePresence>
