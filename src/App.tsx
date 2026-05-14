@@ -1,5 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
+import { db } from './lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, increment } from 'firebase/firestore';
+
 import { Header, GameCard } from './components/UI';
 import { GAMES, BADGES } from './constants';
 import { GameId } from './types';
@@ -29,7 +32,12 @@ import TurboRacing from './components/games/TurboRacing';
 import CubePuzzle from './components/games/CubePuzzle';
 import WhackARabbit from './components/games/WhackARabbit';
 import TicTacToe from './components/games/TicTacToe';
+import FruitSlicer from './components/games/FruitSlicer';
 import MultiplayerLobby from './components/MultiplayerLobby';
+import UsernameSelection from './components/UsernameSelection';
+import SocialManager from './components/SocialManager';
+import { UserProfile } from './types';
+
 
 function Dashboard() {
   const { user, profile, signIn, updateProfile } = useAuth();
@@ -38,46 +46,79 @@ function Dashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [activeTab, setActiveTab] = useState<'games' | 'friends' | 'awards' | 'leaderboard'>('games');
+  const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
 
-  const handleScoreSubmit = (score: number) => {
-    if (!profile) return;
-    const newTotal = (profile.totalScore || 0) + score;
-    updateProfile({ totalScore: newTotal });
-    
-    // Check for achievements
-    if (newTotal > 1000 && !profile.badges.includes('early-bird')) {
-      updateProfile({ badges: [...profile.badges, 'early-bird'] });
+  useEffect(() => {
+    if (activeTab === 'leaderboard') {
+      const q = query(collection(db, 'users'), orderBy('totalScore', 'desc'), limit(10));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => doc.data() as UserProfile);
+        setLeaderboard(data);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
+
+
+  const handleScoreSubmit = async (score: number) => {
+    try {
+      if (!profile) return;
+      
+      const currentScore = profile.totalScore || 0;
+      const newTotal = currentScore + score;
+      const updates: any = { 
+        totalScore: increment(score) 
+      };
+      
+      // Check for achievements using the calculated local total for immediate feedback
+      if (newTotal > 1000 && !profile.badges?.includes('early-bird')) {
+        updates.badges = [...(profile.badges || []), 'early-bird'];
+      }
+      
+      await updateProfile(updates);
+    } catch (error) {
+      console.error("Score submission failed:", error);
     }
   };
+
+
+
 
   const restrictedGames = profile?.parentalControls?.restrictedGames || [];
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-10 flex flex-col max-h-screen overflow-hidden">
-      <Header onOpenSettings={() => setShowSettings(true)} />
+    <div className="min-h-screen p-2 md:p-4 lg:p-6 flex flex-col max-h-screen overflow-hidden relative">
+      <Header onOpenSettings={() => setShowSettings(true)} onOpenMultiplayer={() => setShowMultiplayer(true)} />
 
       {!user ? (
         <main className="flex-1 flex flex-col items-center justify-center text-center">
           <motion.div 
             initial={{ scale: 0 }} 
             animate={{ scale: 1 }} 
-            className="w-40 h-40 bg-white rounded-[40px] flex items-center justify-center mb-8 shadow-[0_12px_0_0_#e0e7ff] border-2 border-indigo-100"
+            className="w-24 h-24 md:w-40 md:h-40 bg-white rounded-[2rem] md:rounded-[40px] flex items-center justify-center mb-6 md:mb-8 shadow-[0_8px_0_0_#e0e7ff] border-2 border-indigo-100"
           >
-            <span className="text-7xl">🎮</span>
+            <span className="text-5xl md:text-7xl">🎮</span>
           </motion.div>
-          <h2 className="text-6xl font-black text-indigo-900 mb-6 tracking-tight">KIDDO HUB</h2>
-          <p className="text-indigo-400 font-black text-xl mb-12 max-w-md uppercase tracking-wider">
-            Ready for your next huge adventure?
-          </p>
+          <div className="mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-6xl font-black text-indigo-900 tracking-tighter uppercase leading-none">
+              {profile?.displayName ? `LET'S PLAY, ${profile.displayName}!` : 'KIDDO HUB'}
+            </h2>
+            <p className="text-indigo-400 font-black text-xs md:text-xl mt-3 md:mt-4 uppercase tracking-widest opacity-60">
+              Pick an adventure and start scoring!
+            </p>
+          </div>
           <button 
             onClick={signIn}
-            className="px-16 py-6 bg-indigo-600 text-white text-3xl font-black rounded-[2.5rem] shadow-[0_12px_0_0_#312e81] hover:bg-indigo-500 active:shadow-none active:translate-y-2 transition-all uppercase"
+            className="px-10 py-4 md:px-16 md:py-6 bg-indigo-600 text-white text-xl md:text-3xl font-black rounded-[2rem] md:rounded-[2.5rem] shadow-[0_8px_0_0_#312e81] hover:bg-indigo-500 active:shadow-none active:translate-y-2 transition-all uppercase"
           >
             PLAY NOW
           </button>
         </main>
+      ) : !profile?.isUsernameSet ? (
+        <UsernameSelection />
       ) : (
         <div className="flex-1 flex gap-6 overflow-hidden">
+
           {/* Main Navigation Sidebar */}
           <nav className="w-24 hidden md:flex flex-col gap-4">
             <button 
@@ -89,8 +130,20 @@ function Dashboard() {
                   : "bg-white text-indigo-400 border-b-8 border-indigo-100 hover:bg-indigo-50"
               )}
             >
-              <span className="text-3xl">🏠</span>
+              <motion.div whileHover={{ scale: 1.1 }}><Clock size={32} /></motion.div>
               <span className="text-[10px] font-black uppercase">Home</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('leaderboard')}
+              className={cn(
+                "w-full aspect-square rounded-[32px] flex flex-col items-center justify-center gap-1 transition-all",
+                activeTab === 'leaderboard' 
+                  ? "bg-indigo-600 text-white shadow-[0_8px_0_0_#3730a3]" 
+                  : "bg-white text-indigo-400 border-b-8 border-indigo-100 hover:bg-indigo-50"
+              )}
+            >
+              <motion.div whileHover={{ scale: 1.1 }}><Trophy size={32} /></motion.div>
+              <span className="text-[10px] font-black uppercase">Ranks</span>
             </button>
             <button 
               onClick={() => setActiveTab('awards')}
@@ -101,7 +154,7 @@ function Dashboard() {
                   : "bg-white text-indigo-400 border-b-8 border-indigo-100 hover:bg-indigo-50"
               )}
             >
-              <span className="text-3xl">🏆</span>
+              <motion.div whileHover={{ scale: 1.1 }}><Award size={32} /></motion.div>
               <span className="text-[10px] font-black uppercase">Awards</span>
             </button>
             <button 
@@ -113,35 +166,27 @@ function Dashboard() {
                   : "bg-white text-indigo-400 border-b-8 border-indigo-100 hover:bg-indigo-50"
               )}
             >
-              <span className="text-3xl">👥</span>
+              <motion.div whileHover={{ scale: 1.1 }}><Users size={32} /></motion.div>
               <span className="text-[10px] font-black uppercase">Friends</span>
             </button>
             <button 
               onClick={() => setShowSettings(true)}
               className="w-full aspect-square bg-white text-indigo-400 rounded-[32px] border-b-8 border-indigo-100 flex flex-col items-center justify-center gap-1 mt-auto hover:bg-indigo-50 transition-all"
             >
-              <span className="text-3xl">⚙️</span>
+              <motion.div whileHover={{ scale: 1.1 }}><Shield size={32} /></motion.div>
               <span className="text-[10px] font-black uppercase">Safe</span>
             </button>
           </nav>
 
           {/* Center Content Scrollable area */}
-          <main className="flex-1 flex flex-col gap-8 overflow-y-auto pr-2 pb-24 md:pb-10">
+          <main className="flex-1 flex flex-col gap-8 overflow-y-auto pb-24 md:pb-10 no-scrollbar pt-4">
             {activeTab === 'games' && (
               <>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl font-black text-indigo-900 tracking-tight">FEATURED GAMES</h2>
-                    <div className="flex gap-2">
-                      <span className="bg-indigo-200 px-4 py-1.5 rounded-full text-[10px] font-black text-indigo-700 uppercase tracking-widest">Everything</span>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowMultiplayer(true)} className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-6 py-3 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-indigo-200 transition-all hover:scale-105 active:scale-95 shadow-md">
-                    <span className="text-xl">👥</span> Play Together
-                  </button>
-                </div>
+
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {GAMES.map(game => (
                     <GameCard 
                       key={game.id} 
@@ -154,85 +199,38 @@ function Dashboard() {
                     />
                   ))}
                 </div>
-
-                {/* Daily Challenge Banner */}
-                <div className="bg-indigo-900 rounded-[40px] p-8 flex flex-col md:flex-row items-center justify-between text-white border-b-[12px] border-indigo-950 shadow-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-800 rounded-full -mr-20 -mt-20 opacity-30" />
-                  <div className="flex items-center gap-6 relative z-10 text-center md:text-left">
-                    <div className="text-6xl bg-white/10 p-5 rounded-[2rem] backdrop-blur-md">⚡</div>
-                    <div>
-                      <p className="text-indigo-400 font-black text-xs uppercase tracking-[0.2em] mb-1">Daily Challenge</p>
-                      <h3 className="text-2xl font-black italic tracking-tight underline decoration-yellow-400 underline-offset-4">MATH MANIA: GALAXY QUEST</h3>
-                    </div>
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-6 items-center mt-6 md:mt-0 relative z-10">
-                    <div className="text-center md:text-right">
-                      <p className="text-xs font-black text-indigo-400 uppercase tracking-widest">Reward</p>
-                      <p className="text-2xl font-black text-yellow-400">+500 XP</p>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        setActiveGame('math-quest');
-                        document.documentElement.requestFullscreen().catch(() => {});
-                      }}
-                      className="bg-yellow-400 text-indigo-900 px-10 py-4 rounded-[2rem] font-black shadow-[0_8px_0_0_#ca8a04] hover:bg-yellow-300 active:shadow-none active:translate-y-2 transition-all uppercase tracking-wider"
-                    >
-                      START NOW
-                    </button>
-                  </div>
-                </div>
               </>
             )}
 
             {activeTab === 'friends' && (
-              <div className="bg-white rounded-[40px] p-8 shadow-[0_12px_0_0_#e0e7ff] border-4 border-indigo-50 min-h-[400px]">
-                <h3 className="text-3xl font-black text-indigo-900 mb-8 tracking-tighter">FRIEND LIST</h3>
-                <div className="grid gap-4">
-                  {profile?.friends.length === 0 ? (
-                    <div className="py-20 text-center bg-indigo-50/50 rounded-[2.5rem] border-4 border-dashed border-indigo-100">
-                      <div className="text-5xl mb-4">👋</div>
-                      <p className="text-indigo-400 font-bold text-xl uppercase italic">No buddies yet? Add some!</p>
-                      <button className="mt-6 px-10 py-3 bg-indigo-600 text-white font-black rounded-full shadow-lg">FIND FRIENDS</button>
-                    </div>
-                  ) : (
-                    profile?.friends.map(friendId => (
-                      <div key={friendId} className="flex items-center justify-between p-6 bg-indigo-50 rounded-[2rem] border-b-4 border-indigo-100">
-                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm italic">🐱</div>
-                            <span className="font-black text-lg text-indigo-900 uppercase">Explorer #{friendId.slice(0,4)}</span>
-                         </div>
-                         <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm" />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              <SocialManager onOpenMultiplayer={() => setShowMultiplayer(true)} />
             )}
 
             {activeTab === 'awards' && (
-              <div className="space-y-8 pb-10">
-                <h3 className="text-3xl font-black text-indigo-900 uppercase tracking-tighter">My Badges ({profile?.badges.length || 0})</h3>
+              <div className="space-y-6 md:space-y-8 pb-10">
+                <h3 className="text-2xl md:text-3xl font-black text-indigo-900 uppercase tracking-tighter">My Badges ({profile?.badges?.length || 0})</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                   {BADGES.map(badge => {
-                    const isUnlocked = profile?.badges.includes(badge.id);
+                    const isUnlocked = profile?.badges?.includes(badge.id);
                     return (
                       <div 
                         key={badge.id}
                         className={cn(
-                          "flex flex-col items-center p-8 rounded-[40px] border-4 transition-all aspect-square justify-center relative overflow-hidden",
+                          "flex flex-col items-center p-2 md:p-6 rounded-[2rem] md:rounded-[40px] border-4 transition-all aspect-square justify-center relative overflow-hidden",
                           isUnlocked 
-                            ? "bg-white border-yellow-400 shadow-[0_12px_0_0_#fef08a]" 
+                            ? "bg-white border-yellow-400 shadow-[0_8px_0_0_#fef08a]" 
                             : "bg-indigo-50 border-indigo-100 grayscale opacity-40"
                         )}
                       >
                         <div className={cn(
-                          "w-20 h-20 rounded-[2rem] flex items-center justify-center mb-6 shadow-md transition-transform",
+                          "w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-[2rem] flex items-center justify-center mb-3 md:mb-6 shadow-md transition-transform",
                           isUnlocked ? "bg-yellow-400 text-white scale-110" : "bg-indigo-200 text-indigo-400"
                         )}>
-                          {isUnlocked ? <Trophy size={40} className="fill-white/20" /> : <Award size={40} />}
+                          {isUnlocked ? <Trophy size={24} className="fill-white/20" /> : <Award size={24} />}
                         </div>
-                        <span className="font-black text-xs text-center uppercase tracking-[0.2em] text-indigo-900">{badge.title}</span>
-                        {isUnlocked && <div className="absolute top-2 right-4 text-2xl">✨</div>}
+                        <span className="font-black text-xs md:text-sm text-center uppercase tracking-tight text-indigo-900">{badge.title}</span>
+                        <p className="text-[10px] md:text-xs text-center font-bold text-indigo-400 mt-1 max-w-[90%] mx-auto leading-tight">{badge.description}</p>
+                        {isUnlocked && <div className="absolute top-1 right-2 md:top-2 md:right-4 text-lg md:text-2xl">✨</div>}
                       </div>
                     );
                   })}
@@ -241,41 +239,43 @@ function Dashboard() {
             )}
 
             {activeTab === 'leaderboard' && (
-              <div className="bg-white rounded-[40px] p-8 shadow-[0_12px_0_0_#e0e7ff] border-4 border-indigo-50 min-h-[400px]">
-                <h3 className="text-3xl font-black text-indigo-900 mb-8 tracking-tighter uppercase">Global Leaderboard</h3>
-                <div className="space-y-4">
-                  {[
-                    { rank: 1, name: 'SkyFox', score: '12,400', icon: '🦊', color: 'bg-blue-400', tag: 'bg-yellow-50' },
-                    { rank: 2, name: 'BearCub', score: '11,210', icon: '🐻', color: 'bg-emerald-400', tag: 'bg-indigo-50' },
-                    { rank: 3, name: profile?.displayName || 'YOU', score: profile?.totalScore || 0, icon: '🐯', color: 'bg-pink-400', tag: 'bg-indigo-600 text-white' },
-                    { rank: 4, name: 'GalaxyKid', score: '8,900', icon: '👩‍🚀', color: 'bg-orange-400', tag: 'bg-indigo-50' },
-                    { rank: 5, name: 'StarPanda', score: '7,500', icon: '🐼', color: 'bg-teal-400', tag: 'bg-indigo-50' },
-                  ].map((entry) => (
-                    <div key={entry.rank} className={cn(
-                      "flex items-center gap-4 p-5 rounded-[2rem] border-b-4 transition-all",
-                      entry.tag,
-                      entry.rank === 3 ? "shadow-xl border-indigo-800 scale-[1.02]" : "border-indigo-100"
+              <div className="bg-white rounded-[2rem] md:rounded-[40px] p-4 md:p-8 shadow-[0_12px_0_0_#e0e7ff] border-4 border-indigo-50 min-h-[400px]">
+                <h3 className="text-xl md:text-3xl font-black text-indigo-900 mb-4 md:mb-8 tracking-tighter uppercase">Global Leaderboard</h3>
+                <div className="space-y-2 md:space-y-4">
+                  {leaderboard.length > 0 ? leaderboard.map((entry, idx) => (
+                    <div key={entry.uid} className={cn(
+                      "flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-[1.5rem] md:rounded-[2rem] border-b-4 transition-all",
+                      entry.uid === user.uid ? "bg-indigo-600 text-white shadow-xl border-indigo-800 scale-[1.02]" : "bg-indigo-50/50 border-indigo-100"
                     )}>
                       <span className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center font-black text-xl",
-                        entry.rank === 1 ? "bg-yellow-400 text-white" : "text-indigo-300"
-                      )}>{entry.rank}</span>
-                      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm", entry.color)}>
-                        {entry.icon}
+                        "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-black text-sm md:text-xl",
+                        idx === 0 ? "bg-yellow-400 text-white shadow-[0_4px_0_0_#d97706]" : "text-indigo-300"
+                      )}>{idx + 1}</span>
+                      <div className={cn(
+                        "w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl shadow-sm bg-white/20",
+                        idx === 0 ? "bg-amber-100" : ""
+                      )}>
+                        {idx === 0 ? '👑' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🐯'}
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-black text-xl uppercase tracking-tight">{entry.name}</h4>
-                        <p className={cn("text-xs font-bold uppercase tracking-widest", entry.rank === 3 ? "text-white/60" : "text-indigo-300")}>Explorer Rank</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-black text-sm md:text-xl uppercase tracking-tight truncate">{entry.displayName}</h4>
+                        <p className={cn("text-[8px] md:text-xs font-bold uppercase tracking-widest truncate", entry.uid === user.uid ? "text-white/60" : "text-indigo-300")}>Explorer Rank</p>
                       </div>
                       <div className="text-right">
-                        <span className="block font-black text-2xl tracking-tighter">{entry.score}</span>
-                        <span className={cn("text-[10px] font-black uppercase tracking-widest", entry.rank === 3 ? "text-white/40" : "text-indigo-200")}>XP Points</span>
+                        <span className="block font-black text-lg md:text-2xl tracking-tighter">{entry.totalScore.toLocaleString()}</span>
+                        <span className={cn("text-[8px] md:text-[10px] font-black uppercase tracking-widest", entry.uid === user.uid ? "text-white/40" : "text-indigo-200")}>Points</span>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-indigo-200">
+                      <Trophy size={48} className="mb-4 opacity-20" />
+                      <p className="font-black uppercase tracking-widest text-sm">Waiting for heroes...</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
           </main>
 
           {/* Right Aside Panel (Leaderboard & Friends Sidebar) */}
@@ -382,6 +382,12 @@ function Dashboard() {
             onClose={() => { setActiveGame(null); setActiveRoomId(null); }} 
           />
         )}
+        {activeGame === 'fruit-slicer' && (
+          <FruitSlicer 
+            onComplete={handleScoreSubmit} 
+            onClose={() => setActiveGame(null)}
+          />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -436,8 +442,8 @@ function Dashboard() {
                     <div className="flex items-center gap-2">
                        <input 
                           type="number" 
-                          value={profile?.parentalControls.timeLimitMinutes} 
-                          onChange={(e) => updateProfile({ parentalControls: { ...profile!.parentalControls, timeLimitMinutes: parseInt(e.target.value) }})}
+                          value={profile?.parentalControls?.timeLimitMinutes || 60} 
+                          onChange={(e) => updateProfile({ parentalControls: { ...(profile?.parentalControls || { restrictedGames: [], isMuted: false }), timeLimitMinutes: parseInt(e.target.value) || 60 }})}
                           className="w-16 p-2 bg-white rounded-xl border-2 border-slate-200 font-bold text-center"
                        />
                        <span className="text-slate-400 font-bold text-sm">min</span>
@@ -448,18 +454,18 @@ function Dashboard() {
                 <div className="p-6 bg-slate-50 rounded-[2rem] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {profile?.parentalControls.isMuted ? <VolumeX className="text-slate-400" size={20} /> : <Volume2 className="text-slate-400" size={20} />}
+                      {profile?.parentalControls?.isMuted ? <VolumeX className="text-slate-400" size={20} /> : <Volume2 className="text-slate-400" size={20} />}
                       <span className="font-bold text-slate-700">Mute Game Audio</span>
                     </div>
                     <button 
-                      onClick={() => updateProfile({ parentalControls: { ...profile!.parentalControls, isMuted: !profile?.parentalControls.isMuted }})}
+                      onClick={() => updateProfile({ parentalControls: { ...(profile?.parentalControls || { timeLimitMinutes: 60, restrictedGames: [] }), isMuted: !profile?.parentalControls?.isMuted }})}
                       className={cn(
                         "w-12 h-6 rounded-full relative transition-all",
-                        profile?.parentalControls.isMuted ? "bg-indigo-600" : "bg-slate-300"
+                        profile?.parentalControls?.isMuted ? "bg-indigo-600" : "bg-slate-300"
                       )}
                     >
                       <motion.div 
-                        animate={{ x: profile?.parentalControls.isMuted ? 24 : 0 }}
+                        animate={{ x: profile?.parentalControls?.isMuted ? 24 : 0 }}
                         className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full" 
                       />
                     </button>
@@ -473,15 +479,15 @@ function Dashboard() {
                       <button
                         key={game.id}
                         onClick={() => {
-                          const current = profile?.parentalControls.restrictedGames || [];
+                          const current = profile?.parentalControls?.restrictedGames || [];
                           const next = current.includes(game.id) 
                             ? current.filter(id => id !== game.id) 
                             : [...current, game.id];
-                          updateProfile({ parentalControls: { ...profile!.parentalControls, restrictedGames: next }});
+                          updateProfile({ parentalControls: { ...(profile?.parentalControls || { timeLimitMinutes: 60, isMuted: false }), restrictedGames: next }});
                         }}
                         className={cn(
                           "px-4 py-2 rounded-xl border-2 text-xs font-bold transition-all",
-                          restrictedGames.includes(game.id) 
+                          (profile?.parentalControls?.restrictedGames || []).includes(game.id) 
                             ? "bg-red-50 border-red-200 text-red-600" 
                             : "bg-white border-slate-100 text-slate-500"
                         )}
@@ -503,31 +509,32 @@ function Dashboard() {
       </AnimatePresence>
       {/* Mobile Navigation */}
       {user && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-indigo-100 p-2 flex justify-around items-center z-[50] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
+        <div className="md:hidden fixed bottom-6 left-2 right-2 bg-white/95 backdrop-blur-xl rounded-[2rem] p-2 flex justify-between items-center z-[50] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_0_0_#e0e7ff] border-2 border-white">
           {[
-            { id: 'games', icon: '🏠', label: 'Home' },
-            { id: 'leaderboard', icon: '🏆', label: 'Ranks' },
-            { id: 'awards', icon: '✨', label: 'Badges' },
-            { id: 'friends', icon: '👥', label: 'Buddies' },
+            { id: 'games', icon: <Clock className="w-6 h-6" /> },
+            { id: 'leaderboard', icon: <Trophy className="w-6 h-6" /> },
+            { id: 'awards', icon: <Award className="w-6 h-6" /> },
+            { id: 'friends', icon: <Users className="w-6 h-6" /> },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                "flex flex-col items-center p-2 rounded-2xl transition-all",
-                activeTab === tab.id ? "bg-indigo-100 text-indigo-600 scale-110" : "text-indigo-300"
+                "w-12 h-12 flex items-center justify-center rounded-[1.5rem] transition-all",
+                activeTab === tab.id 
+                  ? "bg-indigo-600 text-white shadow-lg scale-110" 
+                  : "text-indigo-300 hover:bg-indigo-50"
               )}
             >
-              <span className="text-2xl">{tab.icon}</span>
-              <span className="text-[10px] font-black uppercase tracking-tighter">{tab.label}</span>
+              {tab.icon}
             </button>
           ))}
+          <div className="w-px h-8 bg-indigo-100 mx-1" />
           <button
             onClick={() => setShowSettings(true)}
-            className="flex flex-col items-center p-2 rounded-2xl text-indigo-300"
+            className="w-12 h-12 flex items-center justify-center rounded-2xl text-indigo-300 hover:bg-indigo-50"
           >
-            <span className="text-2xl">⚙️</span>
-            <span className="text-[10px] font-black uppercase tracking-tighter">Safe</span>
+            <Shield className="w-6 h-6" />
           </button>
         </div>
       )}

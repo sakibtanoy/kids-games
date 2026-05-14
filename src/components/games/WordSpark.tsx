@@ -49,6 +49,8 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
   const [scrambled, setScrambled] = useState<string[]>([]);
   const [guess, setGuess] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [hints, setHints] = useState(3);
   const [feedback, setFeedback] = useState<'success' | 'fail' | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
 
@@ -61,6 +63,21 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
     setScrambled(s);
     setGuess([]);
     setFeedback(null);
+  };
+
+  const useHint = () => {
+    if (hints <= 0 || feedback || guess.length >= currentWord.length) return;
+    
+    // Find first missing letter
+    const missingIdx = guess.length;
+    const targetChar = currentWord[missingIdx];
+    
+    // Find that char in scrambled
+    const sIdx = scrambled.indexOf(targetChar);
+    if (sIdx !== -1) {
+      addLetter(targetChar, sIdx);
+      setHints(h => h - 1);
+    }
   };
 
   useEffect(() => {
@@ -94,9 +111,20 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
       }, 1500);
     } else {
       setFeedback('fail');
+      setLives(l => {
+        const next = l - 1;
+        if (next <= 0) {
+          // Reset game on death
+          setTimeout(() => {
+            onScoreSubmit(score);
+            onClose();
+          }, 1500);
+        }
+        return next;
+      });
       setTimeout(() => {
         setFeedback(null);
-        // Reset level
+        // Reset current word attempt
         setScrambled(currentWord.split('').sort(() => Math.random() - 0.5));
         setGuess([]);
       }, 1000);
@@ -129,16 +157,30 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
     <div className="fixed inset-0 bg-amber-900/95 z-[100] flex flex-col items-center justify-center p-6">
       {/* Header */}
       <div className="w-full max-w-xl flex items-center justify-between mb-16">
-        <div className="bg-amber-400 p-4 rounded-3xl shadow-[0_8px_0_0_rgba(180,83,9,1)]">
-          <Type className="text-amber-900" size={32} />
+        <div className="bg-amber-400 p-2 md:p-4 rounded-2xl md:rounded-3xl shadow-[0_4px_0_0_rgba(180,83,9,1)] md:shadow-[0_8px_0_0_rgba(180,83,9,1)]">
+          <Type className="text-amber-900" size={24} />
         </div>
         <div className="text-center">
-          <p className="text-amber-300 font-black text-sm tracking-widest uppercase">Word Finder</p>
-          <h2 className="text-white font-black text-5xl tracking-tight">{score}</h2>
+          <div className="flex gap-1 mb-2 justify-center">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Sparkles key={i} size={16} className={i < lives ? "text-rose-500 fill-rose-500" : "text-white/20"} />
+            ))}
+          </div>
+          <p className="text-amber-300 font-black text-[10px] md:text-sm tracking-widest uppercase">Word Finder</p>
+          <h2 className="text-white font-black text-3xl md:text-5xl tracking-tight">{score}</h2>
         </div>
-        <button onClick={onClose} className="p-4 bg-white/10 rounded-3xl text-white">
-          <X size={24} />
-        </button>
+        <div className="flex gap-2">
+           <button 
+             onClick={useHint} 
+             disabled={hints <= 0 || !!feedback}
+             className="px-4 py-2 bg-amber-400 rounded-2xl text-amber-900 font-black text-xs shadow-md disabled:opacity-50"
+           >
+             HINT ({hints})
+           </button>
+           <button onClick={() => { onScoreSubmit(score); onClose(); }} className="p-4 bg-white/10 rounded-3xl text-white">
+             <X size={24} />
+           </button>
+        </div>
       </div>
 
       <div className="relative w-full max-w-md flex flex-col items-center">
@@ -196,7 +238,7 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
             {feedback === 'success' ? <Check size={32} /> : 'CHECK WORD'}
           </motion.button>
           <button 
-            onClick={onClose}
+            onClick={() => { onScoreSubmit(score); onClose(); }}
             className="px-8 py-6 rounded-[2.5rem] bg-amber-800/30 text-amber-200 font-black border-2 border-amber-700/50 hover:bg-amber-800/50 transition-all"
           >
             EXIT
@@ -205,13 +247,51 @@ export default function WordSpark({ onScoreSubmit, onClose }: { onScoreSubmit: (
       </div>
 
       {feedback === 'success' && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1.2, rotate: [0, -5, 5, 0] }}
-          className="absolute text-7xl font-black text-white pointer-events-none drop-shadow-2xl"
-        >
-          GENIUS!
-        </motion.div>
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ scale: 0, x: 0, y: 0 }}
+              animate={{ 
+                scale: [0, 1, 0],
+                x: (Math.random() - 0.5) * 400,
+                y: (Math.random() - 0.5) * 400,
+                rotate: Math.random() * 360
+              }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="absolute"
+            >
+              <Sparkles className="text-yellow-400 fill-yellow-400" size={Math.random() * 24 + 12} />
+            </motion.div>
+          ))}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: [0, 1.2, 1], rotate: [0, -5, 5, 0] }}
+            className="text-5xl md:text-7xl font-black text-white drop-shadow-2xl z-50 bg-amber-500 px-10 py-5 rounded-[3rem] border-b-[10px] border-amber-600"
+          >
+            GENIUS!
+          </motion.div>
+        </div>
+      )}
+
+      {lives <= 0 && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-6">
+           <motion.div 
+             initial={{ scale: 0.9, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1 }}
+             className="bg-white rounded-[3rem] p-12 text-center shadow-2xl border-b-[12px] border-amber-100 max-w-sm w-full"
+           >
+              <div className="text-7xl mb-4">💨</div>
+              <h2 className="text-4xl font-black text-slate-800 mb-2">OOPS!</h2>
+              <p className="text-amber-500 font-bold mb-8 uppercase tracking-widest">Out of lives!</p>
+              <button 
+                onClick={() => { onScoreSubmit(score); onClose(); }}
+                className="w-full py-5 bg-amber-500 text-white font-black rounded-2xl shadow-[0_8px_0_0_#b45309]"
+              >
+                EXIT GAME
+              </button>
+           </motion.div>
+        </div>
       )}
     </div>
   );

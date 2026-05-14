@@ -72,13 +72,22 @@ export const GAMES: GameMeta[] = [
     color: '#3b82f6',
     gradient: 'from-blue-500 to-cyan-600',
     category: 'puzzle'
+  },
+  {
+    id: 'fruit-slicer',
+    title: 'Fruit Slicer',
+    description: 'Slice juicy fruits and avoid dangerous bombs!',
+    icon: 'Apple',
+    color: '#10b981',
+    gradient: 'from-green-400 to-emerald-600',
+    category: 'skill'
   }
 ];
 
 export const BADGES = [
-  { id: 'early-bird', title: 'Early Bird', icon: 'Sunrise' },
-  { id: 'math-wizard', title: 'Math Wizard', icon: 'Sparkles' },
-  { id: 'top-racer', title: 'Top Racer', icon: 'Trophy' },
-  { id: 'word-master', title: 'Word Master', icon: 'Languages' },
-  { id: 'adventure-hero', title: 'Adventure Hero', icon: 'Shield' }
+  { id: 'early-bird', title: 'Early Bird', description: 'Join the hub and start your adventure!', icon: 'Sunrise' },
+  { id: 'math-wizard', title: 'Math Wizard', description: 'Score over 1000 points in Math Quest.', icon: 'Sparkles' },
+  { id: 'top-racer', title: 'Top Racer', description: 'Complete 10 races in Turbo Racing.', icon: 'Trophy' },
+  { id: 'word-master', title: 'Word Master', description: 'Solve 20 words in Word Spark.', icon: 'Languages' },
+  { id: 'adventure-hero', title: 'Adventure Hero', description: 'Reach 5000m in Space Adventure.', icon: 'Shield' }
 ];

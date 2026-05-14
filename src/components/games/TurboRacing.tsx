@@ -76,7 +76,9 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
   const [carColor, setCarColor] = useState('#f43f5e'); // Default rose-500
   const [carDesign, setCarDesign] = useState<'classic' | 'sport' | 'stealth'>('classic');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const gameRef = useRef<HTMLDivElement>(null);
+
 
   const getLanes = () => {
     if (difficulty === 'easy') return 2;
@@ -125,6 +127,7 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
   }, [difficulty, gameOver, score]);
 
   useEffect(() => {
+    if (gameOver || hasSubmitted) return;
     const playerRect = { x: playerX - 2, y: 76, width: 4, height: 10 };
     for (const o of obstacles) {
       if (
@@ -134,11 +137,14 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
         playerRect.y + playerRect.height > o.y
       ) {
         setGameOver(true);
+        setHasSubmitted(true);
         onScoreSubmit(score);
         break;
       }
     }
-  }, [obstacles, playerX]);
+  }, [obstacles, playerX, gameOver, hasSubmitted, score, onScoreSubmit]);
+
+
 
   const handleControl = (e: React.MouseEvent | React.TouchEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -260,7 +266,7 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
           <p className="text-[10px] font-black uppercase text-white/50">Speed</p>
           <p className="text-3xl font-black">{Math.floor(score/10)} km/h</p>
         </div>
-        <button onClick={onClose} className="p-4 bg-white/10 rounded-2xl text-white backdrop-blur-md">
+        <button onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }} className="p-4 bg-white/10 rounded-2xl text-white backdrop-blur-md">
           <X size={24} />
         </button>
       </div>
@@ -295,17 +301,18 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
         {gameOver && (
           <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-center justify-center p-6">
             <div className="bg-white p-12 rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-rose-100 shadow-2xl animate-in zoom-in-95 duration-200">
-              <h2 className="text-5xl font-black text-slate-800 mb-4 tracking-tighter uppercase">CRASHED!</h2>
-              <p className="text-rose-500 font-bold text-2xl mb-8 italic">Distance: {Math.floor(score/10)}m</p>
+              <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-4 tracking-tighter uppercase">CRASHED!</h2>
+              <p className="text-rose-500 font-bold text-xl md:text-2xl mb-6 md:mb-8 italic">Distance: {Math.floor(score/10)}m</p>
               <div className="grid grid-cols-2 gap-4">
                 <button 
-                  onClick={() => { setGameOver(false); setScore(0); setObstacles([]); }}
+                  onClick={() => { setGameOver(false); setScore(0); setObstacles([]); setHasSubmitted(false); }}
                   className="py-5 bg-rose-600 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#9f1239] transition-all active:translate-y-2 active:shadow-none uppercase"
                 >
+
                   Again
                 </button>
                 <button 
-                  onClick={onClose}
+                  onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }}
                   className="py-5 bg-slate-100 text-slate-500 font-black text-xl rounded-2xl border-b-8 border-slate-200 hover:bg-slate-200 active:translate-y-2 active:shadow-none transition-all uppercase"
                 >
                   Exit

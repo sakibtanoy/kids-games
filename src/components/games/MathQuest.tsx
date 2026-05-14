@@ -10,6 +10,8 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
   const [problem, setProblem] = useState({ a: 0, b: 0, op: '+', answer: 0, options: [0] });
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
+  const [hints, setHints] = useState(3);
+  const [disabledOptions, setDisabledOptions] = useState<number[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [maxTime, setMaxTime] = useState(30);
   const [showResult, setShowResult] = useState(false);
@@ -130,6 +132,7 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
       setScore(s => s + 100 * level);
       setTimeout(() => {
         setFeedback(null);
+        setDisabledOptions([]);
         setLevel(l => l + 1);
         setTimeLeft(maxTime); // Reset timer
         generateProblem(level + 1, difficulty);
@@ -156,12 +159,23 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
     setLevel(1);
     setScore(0);
     setLives(3);
+    setHints(3);
+    setDisabledOptions([]);
     setShowResult(false);
     setFeedback(null);
     const initialTime = difficulty === 'easy' ? 30 : difficulty === 'pro' ? 20 : 10;
     setTimeLeft(initialTime);
     setMaxTime(initialTime);
     generateProblem(1, difficulty);
+  };
+
+  const useHint = () => {
+    if (hints <= 0 || feedback || disabledOptions.length > 0) return;
+    
+    const wrongOptions = problem.options.filter(opt => opt !== problem.answer);
+    const toDisable = wrongOptions.sort(() => Math.random() - 0.5).slice(0, 2);
+    setDisabledOptions(toDisable);
+    setHints(h => h - 1);
   };
 
   if (!difficulty) {
@@ -225,12 +239,21 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
             ))}
           </div>
           <div className="text-center">
-            <p className="text-emerald-300 font-black tracking-widest text-xs">LEVEL {level}</p>
+            <p className="text-emerald-300 font-black tracking-widest text-xs uppercase">Level {level}</p>
             <h2 className="text-white font-black text-2xl">{score}</h2>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/10 rounded-xl text-white">
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={useHint}
+              disabled={hints <= 0 || feedback || disabledOptions.length > 0}
+              className="bg-yellow-400 text-indigo-900 px-4 py-1.5 rounded-xl font-black text-xs shadow-md disabled:opacity-50 hover:bg-yellow-300 transition-all"
+            >
+              HINT ({hints})
+            </button>
+            <button onClick={() => { onScoreSubmit(score); onClose(); }} className="p-2 bg-white/10 rounded-xl text-white">
+              <X size={20} />
+            </button>
+          </div>
         </div>
         
         {/* Timer Bar */}
@@ -251,9 +274,9 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
         key={level}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 w-full max-w-md bg-white rounded-[3rem] p-12 shadow-2xl flex flex-col items-center border-b-[12px] border-emerald-100"
+        className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-12 shadow-2xl flex flex-col items-center border-b-[12px] border-emerald-100"
       >
-        <div className="text-8xl font-black text-slate-800 mb-12 flex items-center gap-6">
+        <div className="text-5xl md:text-8xl font-black text-slate-800 mb-8 md:mb-12 flex items-center gap-4 md:gap-6">
           <span>{problem.a}</span>
           <span className="text-emerald-500">{problem.op === '*' ? '×' : problem.op}</span>
           <span>{problem.b}</span>
@@ -263,11 +286,13 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
           {problem.options.map((opt, i) => (
             <motion.button
               key={i}
-              whileHover={{ scale: 1.05, translateY: -4 }}
-              whileTap={{ scale: 0.95 }}
+              disabled={disabledOptions.includes(opt) || !!feedback}
+              whileHover={disabledOptions.includes(opt) ? {} : { scale: 1.05, translateY: -4 }}
+              whileTap={disabledOptions.includes(opt) ? {} : { scale: 0.95 }}
               onClick={() => handleAnswer(opt)}
               className={cn(
                 "p-6 rounded-3xl text-3xl font-black border-b-8 transition-all",
+                disabledOptions.includes(opt) ? "bg-slate-100 text-slate-200 border-slate-100 opacity-50 grayscale" :
                 feedback === 'correct' && opt === problem.answer ? "bg-emerald-500 text-white border-emerald-700" :
                 feedback === 'wrong' && opt !== problem.answer ? "bg-rose-500 text-white border-rose-700" :
                 "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
@@ -286,7 +311,7 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
             animate={{ scale: 1, rotate: 0 }}
             exit={{ scale: 0, rotate: 20 }}
             className={cn(
-              "absolute z-50 px-12 py-6 rounded-full font-black text-5xl shadow-2xl skew-x-[-12deg]",
+              "absolute z-50 px-8 py-4 md:px-12 md:py-6 rounded-full font-black text-3xl md:text-5xl shadow-2xl skew-x-[-12deg]",
               feedback === 'correct' ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
             )}
           >
@@ -297,15 +322,15 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
 
       <AnimatePresence>
         {showResult && (
-          <div className="absolute inset-0 z-50 bg-emerald-950/90 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="absolute inset-0 z-50 bg-emerald-950/90 backdrop-blur-xl flex items-center justify-center p-4">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white p-12 rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-emerald-100 shadow-2xl"
+              className="bg-white p-6 md:p-12 rounded-[2.5rem] md:rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-emerald-100 shadow-2xl"
             >
-              <Trophy size={64} className="text-emerald-500 mx-auto mb-6" />
-              <h2 className="text-5xl font-black text-slate-800 mb-2 tracking-tighter uppercase">QUIZ OVER</h2>
-              <p className="text-emerald-500 font-bold text-3xl mb-8 italic">Score: {score}</p>
+              <Trophy size={48} className="text-emerald-500 mx-auto mb-4 md:mb-6" />
+              <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-2 tracking-tighter uppercase">QUIZ OVER</h2>
+              <p className="text-emerald-500 font-bold text-xl md:text-3xl mb-6 md:mb-8 italic">Score: {score}</p>
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={handleRestart}
@@ -314,7 +339,7 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
                   Again
                 </button>
                 <button 
-                  onClick={onClose}
+                  onClick={() => { onScoreSubmit(score); onClose(); }}
                   className="py-5 bg-slate-100 text-slate-500 font-black text-xl rounded-2xl border-b-8 border-slate-200 hover:bg-slate-200 active:translate-y-2 active:shadow-none transition-all uppercase"
                 >
                   Exit

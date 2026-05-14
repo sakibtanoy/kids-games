@@ -33,7 +33,7 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
       const payload = {
         host: user.uid,
         status: 'waiting',
-        players: [{ uid: user.uid, name: profile.displayName }],
+        players: [{ uid: user.uid, name: profile?.displayName || 'Hero' }],
         createdAt: Date.now()
       };
       await setDoc(doc(db, 'rooms', newCode), payload);
@@ -58,9 +58,9 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
            return;
         }
         await updateDoc(doc(db, 'rooms', code), {
-          players: arrayUnion({ uid: user.uid, name: profile.displayName })
+          players: arrayUnion({ uid: user.uid, name: profile?.displayName || 'Hero' })
         });
-        setRoomData({ id: code, ...data, players: [...data.players, { uid: user.uid, name: profile.displayName }] });
+        setRoomData({ id: code, ...data, players: [...data.players, { uid: user.uid, name: profile?.displayName || 'Hero' }] });
       } else {
         alert('Room not found');
       }
@@ -88,14 +88,14 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
 
   if (roomData) {
     return (
-      <div className="fixed inset-0 bg-indigo-900/95 z-[100] flex items-center justify-center p-6">
-        <div className="bg-white rounded-[3rem] p-12 max-w-lg w-full text-center shadow-2xl relative">
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl">
+      <div className="fixed inset-0 bg-indigo-900/95 z-[100] flex items-center justify-center p-4">
+        <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 max-w-lg w-full text-center shadow-2xl relative">
+          <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl">
             <X size={24} />
           </button>
           
-          <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Lobby Code</h2>
-          <div className="text-6xl font-black text-indigo-500 tracking-widest mb-8">{roomData.id}</div>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2 uppercase tracking-tighter">Lobby Code</h2>
+          <div className="text-4xl md:text-6xl font-black text-indigo-500 tracking-widest mb-6 md:mb-8">{roomData.id}</div>
           
           <div className="bg-indigo-50 rounded-2xl p-6 mb-8 text-left">
             <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">
@@ -134,9 +134,9 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
   }
 
   return (
-    <div className="fixed inset-0 bg-indigo-900/95 z-[100] flex items-center justify-center p-6">
-      <div className="bg-white rounded-[3rem] p-12 max-w-sm w-full text-center shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl">
+    <div className="fixed inset-0 bg-indigo-900/95 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 max-w-sm w-full text-center shadow-2xl relative">
+        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl">
           <X size={24} />
         </button>
 

@@ -31,26 +31,8 @@ service cloud.firestore {
 
     // 1. User Profiles
     match /users/{userId} {
-      // Allow read if owner or signed in
       allow read: if isSignedIn();
-
-      function isValidUser(data) {
-        return data.keys().hasAll(['uid', 'displayName', 'totalScore', 'createdAt', 'updatedAt'])
-               && data.uid == request.auth.uid
-               && data.displayName is string
-               && data.totalScore is number;
-      }
-
-      allow create: if isOwner(userId) && isValidUser(incoming());
-      
-      allow update: if isOwner(userId) 
-                    && (
-                      incoming().updatedAt == request.time || incoming().updatedAt == existing().updatedAt
-                    )
-                    && (
-                      incoming().diff(existing()).affectedKeys()
-                      .hasOnly(['displayName', 'avatarUrl', 'totalScore', 'badges', 'achievements', 'friends', 'parentalControls', 'updatedAt'])
-                    );
+      allow create, update: if isOwner(userId);
     }
 
     // 2. Leaderboards
@@ -58,6 +40,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
     }
+
     // 3. Multiplayer Rooms
     match /rooms/{roomId} {
       allow read: if isSignedIn();
@@ -65,5 +48,15 @@ service cloud.firestore {
       allow update: if isSignedIn();
       allow delete: if isSignedIn();
     }
+
+    // 4. Unique Usernames
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+
   }
 }
+

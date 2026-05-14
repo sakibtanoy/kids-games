@@ -15,6 +15,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | 'local' | null>(roomId ? 'legend' : null);
   const [winner, setWinner] = useState<'player' | 'bot' | 'player1' | 'player2' | 'draw' | null>(null);
   const [winningLine, setWinningLine] = useState<number[] | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [localTurn, setLocalTurn] = useState<'X' | 'O'>('X');
   
   // Realtime state
@@ -222,15 +223,17 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
     setWinningLine(null);
     setIsPlayerTurn(true);
     setLocalTurn('X');
+    setHasSubmitted(false);
     if (roomId) {
       onClose();
     }
   };
 
   const handleEnd = () => {
-    if (winner === 'player') {
+    if (!hasSubmitted && winner === 'player') {
       const pts = difficulty === 'legend' ? 100 : difficulty === 'pro' ? 50 : 20;
       onScoreSubmit(pts);
+      setHasSubmitted(true);
     }
     onClose();
   };
@@ -267,7 +270,7 @@ export default function TicTacToe({ onScoreSubmit, onClose, roomId }: { onScoreS
   return (
     <div className="fixed inset-0 bg-sky-900/95 z-[100] flex flex-col items-center justify-center p-6">
       <div className="absolute top-8 left-8 right-8 flex justify-end z-20">
-        <button onClick={onClose} className="p-4 bg-white/10 rounded-2xl text-white backdrop-blur-md">
+        <button onClick={handleEnd} className="p-4 bg-white/10 rounded-2xl text-white backdrop-blur-md">
           <X size={24} />
         </button>
       </div>

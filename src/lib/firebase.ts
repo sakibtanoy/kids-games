@@ -8,6 +8,8 @@ console.log("Firebase App initialized with Project ID:", firebaseConfig.projectI
 console.log("Using Firestore Database ID:", firebaseConfig.firestoreDatabaseId || "(default)");
 
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+
 export const auth = getAuth(app);
 
 /**

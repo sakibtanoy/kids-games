@@ -7,8 +7,10 @@ export interface UserProfile {
   achievements: Achievement[];
   friends: string[];
   parentalControls: ParentalControls;
+  isUsernameSet: boolean;
   createdAt: string;
   updatedAt: string;
+
 }
 
 export interface Achievement {

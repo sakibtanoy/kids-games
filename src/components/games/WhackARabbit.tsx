@@ -10,6 +10,8 @@ export default function WhackARabbit({ onScoreSubmit, onClose }: { onScoreSubmit
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
 
   useEffect(() => {
     if (!difficulty || timeLeft <= 0) return;
@@ -56,10 +58,12 @@ export default function WhackARabbit({ onScoreSubmit, onClose }: { onScoreSubmit
   }, [difficulty, timeLeft]);
 
   useEffect(() => {
-    if (timeLeft === 0) {
+    if (timeLeft === 0 && !hasSubmitted) {
+      setHasSubmitted(true);
       onScoreSubmit(score);
     }
-  }, [timeLeft, score, onScoreSubmit]);
+  }, [timeLeft, score, hasSubmitted, onScoreSubmit]);
+
 
   if (!difficulty) {
     return (
@@ -97,7 +101,7 @@ export default function WhackARabbit({ onScoreSubmit, onClose }: { onScoreSubmit
           <p className="text-orange-200 font-black text-xs uppercase tracking-[0.3em]">Score</p>
           <h2 className="text-5xl font-black">{score}</h2>
         </div>
-        <button onClick={onClose} className="p-4 bg-white/20 rounded-2xl text-white">
+        <button onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }} className="p-4 bg-white/20 rounded-2xl text-white">
           <X size={24} />
         </button>
       </div>
@@ -166,13 +170,19 @@ export default function WhackARabbit({ onScoreSubmit, onClose }: { onScoreSubmit
         >
           <div className="bg-white rounded-[3rem] p-12 text-center shadow-2xl border-b-[12px] border-orange-100">
             <Trophy className="text-yellow-400 mx-auto mb-6" size={80} />
-            <h3 className="text-4xl font-black text-slate-800 mb-2 uppercase">TIME UP!</h3>
-            <p className="text-indigo-400 font-black text-2xl mb-8">Score: {score}</p>
+            <h3 className="text-3xl md:text-4xl font-black text-slate-800 mb-2 uppercase">TIME UP!</h3>
+            <p className="text-indigo-400 font-black text-xl md:text-2xl mb-6 md:mb-8">Score: {score}</p>
             <button 
-              onClick={() => { setTimeLeft(30); setScore(0); }}
+              onClick={() => { setTimeLeft(30); setScore(0); setHasSubmitted(false); }}
               className="px-12 py-4 bg-orange-500 text-white font-black rounded-2xl shadow-[0_8px_0_0_#9a3412] uppercase"
             >
               Play Again
+            </button>
+            <button 
+              onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }}
+              className="mt-4 px-12 py-4 bg-slate-100 text-slate-500 font-black rounded-2xl border-b-8 border-slate-200 uppercase"
+            >
+              Exit
             </button>
           </div>
         </motion.div>

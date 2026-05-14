@@ -41,6 +41,7 @@ export default function SpaceAdventure({ onScoreSubmit, onClose }: { onScoreSubm
   const [asteroids, setAsteroids] = useState<{ id: number, x: number, y: number, size: number }[]>([]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
   const gameRef = useRef<HTMLDivElement>(null);
   const keysPressed = useRef<{ [key: string]: boolean }>({});
@@ -100,7 +101,7 @@ export default function SpaceAdventure({ onScoreSubmit, onClose }: { onScoreSubm
   }, [difficulty, gameOver, score]);
 
   useEffect(() => {
-    if (gameOver) return;
+    if (gameOver || hasSubmitted) return;
     const playerRect = { x: playerX - 4, y: 78, width: 8, height: 12 };
     for (const a of asteroids) {
       if (
@@ -110,11 +111,12 @@ export default function SpaceAdventure({ onScoreSubmit, onClose }: { onScoreSubm
         playerRect.y + playerRect.height > a.y
       ) {
         setGameOver(true);
+        setHasSubmitted(true);
         onScoreSubmit(score);
         break;
       }
     }
-  }, [asteroids, playerX]);
+  }, [asteroids, playerX, gameOver, hasSubmitted, score, onScoreSubmit]);
 
   const handleTouch = (e: React.MouseEvent | React.TouchEvent) => {
     if (gameOver || !difficulty) return;
@@ -178,7 +180,7 @@ export default function SpaceAdventure({ onScoreSubmit, onClose }: { onScoreSubm
           <p className="text-[10px] font-black text-indigo-300 tracking-widest">DISTANCE</p>
           <h2 className="text-white font-black text-2xl">{score}m</h2>
         </div>
-        <button onClick={onClose} className="p-3 bg-white/10 rounded-2xl text-white backdrop-blur-md">
+        <button onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }} className="p-3 bg-white/10 rounded-2xl text-white backdrop-blur-md">
           <X size={20} />
         </button>
       </div>
@@ -216,17 +218,17 @@ export default function SpaceAdventure({ onScoreSubmit, onClose }: { onScoreSubm
             animate={{ opacity: 1, scale: 1 }}
             className="absolute z-50 bg-white p-12 rounded-[3rem] text-center max-w-sm w-full border-b-[12px] border-slate-100 shadow-2xl"
           >
-            <h2 className="text-5xl font-black text-slate-800 mb-4 tracking-tighter uppercase">CRASHED!</h2>
-            <p className="text-indigo-500 font-bold text-2xl mb-8 italic">Distance: {score}m</p>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-4 tracking-tighter uppercase">CRASHED!</h2>
+            <p className="text-rose-500 font-bold text-xl md:text-2xl mb-6 md:mb-8 italic">Distance: {Math.floor(score/10)}m</p>
             <div className="grid grid-cols-2 gap-4 mt-6">
               <button 
-                onClick={() => { setGameOver(false); setScore(0); setAsteroids([]); }}
+                onClick={() => { setGameOver(false); setScore(0); setAsteroids([]); setHasSubmitted(false); }}
                 className="py-5 bg-indigo-600 text-white font-black text-xl rounded-2xl shadow-[0_8px_0_0_#4338ca] hover:bg-indigo-500 active:translate-y-2 active:shadow-none transition-all uppercase"
               >
                 Fly Again
               </button>
               <button 
-                onClick={onClose}
+                onClick={() => { if (!hasSubmitted) onScoreSubmit(score); onClose(); }}
                 className="py-5 bg-slate-100 text-slate-500 font-black text-xl rounded-2xl border-b-8 border-slate-200 hover:bg-slate-200 active:translate-y-2 active:shadow-none transition-all uppercase"
               >
                 Exit

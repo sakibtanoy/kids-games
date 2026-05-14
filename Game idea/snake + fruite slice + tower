@@ -1,0 +1,129 @@
+# 🍉 Fruit Ninja Game
+
+### 🎮 What it does
+
+Fruits appear on screen and player slices them.
+
+### 🕹️ How to play
+
+* Swipe (or drag mouse) across fruits
+* Slice fruits to gain points
+* Avoid bombs
+
+### ⚙️ Core Logic
+
+* Spawn fruits randomly from bottom
+* Apply upward movement + gravity (they fall down)
+* Detect swipe collision with fruit
+* If sliced → increase score + play animation
+* If bomb is sliced → game over
+* Missed fruits (optional penalty)
+* Speed increases over time
+
+---
+
+# 🏗️ Tower Building Game (Animals / Objects)
+
+### 🎮 What it does
+
+Player stacks animals or objects to build a tall tower.
+
+### 🕹️ How to play
+
+* Object moves left and right at top
+* Tap to drop it
+* Stack carefully without falling
+
+### ⚙️ Core Logic
+
+* Moving object system (left ↔ right loop)
+* Drop on click/tap
+* Physics check (balance / alignment)
+* If placed well → stable
+* If misaligned → object tilts/falls
+* Tower height = score
+* Game over when tower collapses
+
+---
+
+# 🐍 Snake Game (Multiplayer)
+
+### 🎮 What it does
+
+Snake eats food, grows longer, and competes with others.
+
+### 🕹️ How to play
+
+* Control snake direction
+* Eat food to grow
+* Avoid hitting walls or yourself
+* Can eat smaller snakes
+
+---
+
+## ⚙️ Core Logic (Single Player)
+
+* Grid-based movement system
+* Snake moves every tick (time interval)
+* Food spawns randomly
+* If snake eats food:
+
+  * Increase length
+  * Increase score
+* Collision detection:
+
+  * Wall → game over
+  * Self → game over
+
+---
+
+## 🌐 Multiplayer Logic
+
+### Real-time system needed
+
+* Each player has:
+
+  * Position
+  * Direction
+  * Length
+
+---
+
+### Game Loop
+
+* Server updates all snakes
+* Broadcast positions to all players
+
+---
+
+### Player Interaction
+
+* If snake head hits another snake:
+
+  * Bigger snake wins
+  * Smaller snake dies
+
+---
+
+### Online Features
+
+* Room system (join game)
+* Leaderboard (live ranking)
+* Respawn system (optional)
+
+---
+
+### 🤖 Bot System
+
+* AI snakes move automatically
+* Find nearest food
+* Avoid collisions
+
+---
+
+# 🔥 Summary
+
+* Fruit Ninja → swipe + collision + physics
+* Tower Game → drop + balance + stacking
+* Snake Game → grid + growth + multiplayer
+
