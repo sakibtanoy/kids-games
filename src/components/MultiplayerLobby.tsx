@@ -5,6 +5,7 @@ import { useAuth } from './AuthProvider';
 import { Users, X, Play, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { GAMES } from '../constants';
+import { ICON_MAP } from '../lib/icons';
 
 export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame: (gameId: string, roomId: string) => void, onClose: () => void }) {
   const { user, profile } = useAuth();
@@ -113,14 +114,27 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
           </div>
 
           {roomData.host === user?.uid ? (
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-slate-500 uppercase tracking-widest text-left">Choose Game to Start:</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {GAMES.map(g => (
-                  <button key={g.id} onClick={() => startGame(g.id)} className={cn("p-4 rounded-2xl text-white font-black uppercase text-sm flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg", g.gradient)}>
-                    <Play size={16} /> {g.title}
-                  </button>
-                ))}
+            <div className="space-y-6">
+              <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] text-left">Choose Game to Start:</h3>
+              <div className="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+                {GAMES.map(g => {
+                  const Icon = ICON_MAP[g.icon] || Play;
+                  return (
+                    <button 
+                      key={g.id} 
+                      onClick={() => startGame(g.id)} 
+                      className={cn(
+                        "p-6 rounded-[2rem] text-white font-black uppercase text-xs flex flex-col items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_8px_0_0_rgba(0,0,0,0.1)] border-2 border-white/20",
+                        g.gradient
+                      )}
+                    >
+                      <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Icon size={24} />
+                      </div>
+                      {g.title}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : (

@@ -1,36 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
-  Trophy, 
-  Settings, 
-  LogOut, 
-  User as UserIcon,
-  ShieldCheck,
-  Star,
-  Rocket,
-  Candy,
-  Binary,
-  Type,
-  Car,
-  Puzzle,
-  Hammer,
-  Hash,
   Users,
-  LucideIcon
+  LucideIcon,
+  Star,
+  Rocket
 } from 'lucide-react';
+import { ICON_MAP } from '../lib/icons';
 import { useAuth } from './AuthProvider';
 import { cn } from '../lib/utils';
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  Rocket,
-  Candy,
-  Binary,
-  Type,
-  Car,
-  Puzzle,
-  Hammer,
-  Hash
-};
+
 
 export function Header({ onOpenSettings, onOpenMultiplayer }: { onOpenSettings: () => void, onOpenMultiplayer: () => void }) {
   const { user, profile } = useAuth();
@@ -103,22 +83,20 @@ interface GameCardProps {
   key?: any;
 }
 
-export function GameCard({ 
-  game, 
-  onClick,
-  isRestricted 
-}: GameCardProps) {
+const PHONE_GAMES = ['tic-tac-toe', 'math-quest', 'word-spark', 'racing', 'fruit-slicer', 'whack-rabbit', 'space-adventure'];
+
+export function GameCard({ game, onClick, isRestricted }: GameCardProps) {
   const Icon = ICON_MAP[game.icon];
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Map category to theme colors
-  const themeStyles = {
-    'adventure': 'bg-blue-400 shadow-[0_12px_0_0_#1e40af] ring-blue-500',
-    'puzzle': 'bg-emerald-400 shadow-[0_12px_0_0_#065f46] ring-emerald-500',
-    'educational': 'bg-amber-400 shadow-[0_12px_0_0_#b45309] ring-amber-500',
-    'skill': 'bg-rose-400 shadow-[0_12px_0_0_#9f1239] ring-rose-500'
-  } as const;
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const style = themeStyles[game.category as keyof typeof themeStyles] || themeStyles.adventure;
+  const isComingSoon = isMobile && !PHONE_GAMES.includes(game.id);
 
   return (
     <motion.div
@@ -126,8 +104,8 @@ export function GameCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "rounded-[2.5rem] md:rounded-[40px] p-3 flex flex-col group h-full transition-all mb-[0.25rem]",
-        style,
+        "rounded-[2.5rem] md:rounded-[40px] p-3 flex flex-col group h-full transition-all mb-[0.25rem] bg-gradient-to-br shadow-[0_10px_0_0_rgba(0,0,0,0.2)]",
+        game.gradient,
         isRestricted && "grayscale opacity-80 pointer-events-none"
       )}
     >
@@ -151,10 +129,13 @@ export function GameCard({
           {game.title}
         </h3>
         <button 
-          onClick={onClick}
-          className="mt-1 bg-white text-indigo-900 font-black py-1.5 md:py-2.5 px-6 md:px-10 rounded-full shadow-lg text-[10px] md:text-sm hover:scale-105 active:scale-95 transition-all uppercase tracking-wider"
+          onClick={isComingSoon ? undefined : onClick}
+          className={cn(
+            "mt-1 font-black py-1.5 md:py-2.5 px-6 md:px-10 rounded-full shadow-lg text-[10px] md:text-sm transition-all uppercase tracking-wider",
+            isComingSoon ? "bg-slate-200/50 text-slate-400 cursor-not-allowed" : "bg-white text-indigo-900 hover:scale-105 active:scale-95"
+          )}
         >
-          {isRestricted ? 'Locked' : 'Play'}
+          {isComingSoon ? 'Coming Soon' : (isRestricted ? 'Locked' : 'Play')}
         </button>
       </div>
     </motion.div>

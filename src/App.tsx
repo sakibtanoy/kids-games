@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { db } from './lib/firebase';
-import { collection, query, orderBy, limit, onSnapshot, increment } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, increment, updateDoc, doc } from 'firebase/firestore';
 
 import { Header, GameCard } from './components/UI';
 import { GAMES, BADGES } from './constants';
@@ -33,6 +33,8 @@ import CubePuzzle from './components/games/CubePuzzle';
 import WhackARabbit from './components/games/WhackARabbit';
 import TicTacToe from './components/games/TicTacToe';
 import FruitSlicer from './components/games/FruitSlicer';
+import TowerStacker from './components/games/TowerStacker';
+import SnakeArena from './components/games/SnakeArena';
 import MultiplayerLobby from './components/MultiplayerLobby';
 import UsernameSelection from './components/UsernameSelection';
 import SocialManager from './components/SocialManager';
@@ -79,6 +81,21 @@ function Dashboard() {
     } catch (error) {
       console.error("Score submission failed:", error);
     }
+  };
+
+  const handleCloseGame = async () => {
+    if (activeRoomId) {
+      try {
+        await updateDoc(doc(db, 'rooms', activeRoomId), {
+          status: 'waiting',
+          gameId: null
+        });
+      } catch (error) {
+        console.error("Failed to reset room status", error);
+      }
+    }
+    setActiveGame(null);
+    setActiveRoomId(null);
   };
 
 
@@ -336,56 +353,69 @@ function Dashboard() {
         {activeGame === 'candy-cruise' && (
           <CandyCruise 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'math-quest' && (
           <MathQuest 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'word-spark' && (
           <WordSpark 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'space-adventure' && (
           <SpaceAdventure 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'racing' && (
           <TurboRacing 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'puzzle' && (
           <CubePuzzle 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'whack-rabbit' && (
           <WhackARabbit 
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'tic-tac-toe' && (
           <TicTacToe 
             roomId={activeRoomId}
             onScoreSubmit={handleScoreSubmit} 
-            onClose={() => { setActiveGame(null); setActiveRoomId(null); }} 
+            onClose={handleCloseGame} 
           />
         )}
         {activeGame === 'fruit-slicer' && (
           <FruitSlicer 
             onComplete={handleScoreSubmit} 
-            onClose={() => setActiveGame(null)}
+            onClose={handleCloseGame}
+          />
+        )}
+        {activeGame === 'tower-stacker' && (
+          <TowerStacker 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame}
+          />
+        )}
+        {activeGame === 'snake-arena' && (
+          <SnakeArena 
+            roomId={activeRoomId}
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
           />
         )}
       </AnimatePresence>
