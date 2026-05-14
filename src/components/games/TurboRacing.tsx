@@ -5,12 +5,12 @@ import { cn } from '../../lib/utils';
 
 function CarModel({ color, design, className }: { color: string, design: string, className?: string }) {
   return (
-    <div className={cn("w-10 h-16 relative transition-all duration-300", className)}>
+    <div className={cn("relative", className)}>
       {/* Main Body Shape */}
       <div 
         className={cn(
           "absolute inset-0 shadow-2xl transition-all duration-300",
-          design === 'classic' ? "rounded-2xl" : design === 'sport' ? "rounded-lg" : "rounded-t-[2rem] rounded-b-lg"
+          design === 'classic' ? "rounded-2xl" : design === 'sport' ? "rounded-lg" : "rounded-t-[1.5rem] rounded-b-lg"
         )}
         style={{ 
           backgroundColor: color, 
@@ -75,22 +75,30 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
   const [obstacles, setObstacles] = useState<{ id: number, x: number, y: number, color: string, design: 'classic' | 'sport' | 'stealth' }[]>([]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [difficulty, setDifficulty] = useState<'easy' | 'pro' | 'legend' | null>(null);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | null>(null);
   const [carColor, setCarColor] = useState('#f43f5e'); 
   const [carDesign, setCarDesign] = useState<'classic' | 'sport' | 'stealth'>('classic');
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const gameRef = useRef<HTMLDivElement>(null);
 
   const getLanes = () => {
-    if (difficulty === 'easy') return 2;
-    if (difficulty === 'pro') return 3;
-    return 4;
+    if (difficulty === 'easy') return 3;
+    if (difficulty === 'medium') return 4;
+    return 5;
   };
 
   const getLaneX = (laneIndex: number) => {
     const lanes = getLanes();
-    const laneWidth = 80 / lanes;
-    return 10 + (laneIndex + 0.5) * laneWidth;
+    const laneWidth = 90 / lanes;
+    return 5 + (laneIndex + 0.5) * laneWidth;
+  };
+
+  const getNearestLaneX = (xPercent: number) => {
+    const lanes = getLanes();
+    const laneWidth = 90 / lanes;
+    const laneIndex = Math.floor((xPercent - 5) / laneWidth);
+    const safeLaneIndex = Math.max(0, Math.min(lanes - 1, laneIndex));
+    return getLaneX(safeLaneIndex);
   };
 
   useEffect(() => {
@@ -100,10 +108,10 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
       setObstacles(prev => {
         const lanes = getLanes();
         const next = prev
-          .map(o => ({ ...o, y: o.y + (difficulty === 'easy' ? 1.5 : difficulty === 'pro' ? 2 : 2.5) + score / 5000 }))
+          .map(o => ({ ...o, y: o.y + (difficulty === 'easy' ? 1.5 : difficulty === 'medium' ? 2 : 2.5) + score / 5000 }))
           .filter(o => o.y < 110);
         
-        if (Math.random() < (difficulty === 'easy' ? 0.02 : difficulty === 'pro' ? 0.03 : 0.04)) {
+        if (Math.random() < (difficulty === 'easy' ? 0.02 : difficulty === 'medium' ? 0.03 : 0.04)) {
           const lane = Math.floor(Math.random() * lanes);
           const isOccupied = next.some(o => Math.abs(o.x - getLaneX(lane)) < 5 && o.y < 15);
           if (!isOccupied) {
@@ -129,12 +137,14 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
 
   useEffect(() => {
     if (gameOver || hasSubmitted) return;
-    const playerRect = { x: playerX - 2, y: 76, width: 4, height: 10 };
+    // Perfect collision box based on standardized size (13% width, 12% height)
+    // Player is at bottom: 14%, so bottom Y is 86%. Top Y is 86 - 12 = 74%.
+    const playerRect = { x: playerX - 6.5, y: 74, width: 13, height: 12 };
     for (const o of obstacles) {
       if (
-        playerRect.x < o.x + 2 &&
-        playerRect.x + playerRect.width > o.x - 2 &&
-        playerRect.y < o.y + 10 &&
+        playerRect.x < o.x + 6.5 &&
+        playerRect.x + playerRect.width > o.x - 6.5 &&
+        playerRect.y < o.y + 12 &&
         playerRect.y + playerRect.height > o.y
       ) {
         setGameOver(true);
@@ -149,8 +159,8 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const rect = gameRef.current?.getBoundingClientRect();
     if (rect) {
-      const x = ((clientX - rect.left) / rect.width) * 100;
-      setPlayerX(Math.max(10, Math.min(90, x)));
+      const xPercent = ((clientX - rect.left) / rect.width) * 100;
+      setPlayerX(Math.max(10, Math.min(90, xPercent)));
     }
   };
 
@@ -193,7 +203,7 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
           </div>
 
           <div className="grid gap-2">
-            {(['easy', 'pro', 'legend'] as const).map(d => (
+            {(['easy', 'medium', 'hard'] as const).map(d => (
               <button key={d} onClick={() => setDifficulty(d)} className="w-full py-3.5 rounded-2xl font-black uppercase text-lg bg-slate-100 text-slate-600 hover:bg-rose-500 hover:text-white transition-all shadow-md active:translate-y-1">{d}</button>
             ))}
           </div>
@@ -217,10 +227,18 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
 
       <div className="relative h-full w-full max-w-md bg-slate-700 shadow-2xl overflow-hidden">
         {/* Road Lanes */}
-        <div className="absolute inset-0 flex justify-evenly">
-          {[...Array(getLanes() + 1)].map((_, i) => (
-            <div key={i} className="w-1 h-full border-l-2 border-dashed border-white/10" />
-          ))}
+        <div className="absolute inset-0">
+          {[...Array(getLanes() + 1)].map((_, i) => {
+            const laneWidth = 90 / getLanes();
+            const x = 5 + i * laneWidth;
+            return (
+              <div 
+                key={i} 
+                className="absolute top-0 bottom-0 w-0.5 border-l-2 border-dashed border-white/10" 
+                style={{ left: `${x}%` }}
+              />
+            );
+          })}
         </div>
 
         {/* Speed Lines */}
@@ -238,14 +256,17 @@ export default function TurboRacing({ onScoreSubmit, onClose }: { onScoreSubmit:
 
         {/* Obstacles */}
         {obstacles.map(o => (
-          <div key={o.id} className="absolute" style={{ left: `${o.x}%`, top: `${o.y}%`, transform: 'translate(-50%, 0)' }}>
-            <CarModel color={o.color} design={o.design} className="rotate-180 opacity-90" />
+          <div key={o.id} className="absolute w-[13%] h-[12%]" style={{ left: `${o.x}%`, top: `${o.y}%`, transform: 'translate(-50%, 0)' }}>
+            <CarModel color={o.color} design={o.design} className="w-full h-full rotate-180 opacity-90" />
           </div>
         ))}
 
         {/* Player Car */}
-        <div className="absolute bottom-[14%] transition-all duration-75" style={{ left: `${playerX}%`, transform: 'translateX(-50%)' }}>
-          <CarModel color={carColor} design={carDesign} />
+        <div 
+          className="absolute bottom-[14%] w-[13%] h-[12%]" 
+          style={{ left: `${playerX}%`, transform: 'translateX(-50%)' }}
+        >
+          <CarModel color={carColor} design={carDesign} className="w-full h-full" />
           {/* Flame effect */}
           <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ repeat: Infinity, duration: 0.2 }} className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 h-8 bg-gradient-to-t from-orange-500 to-transparent blur-sm" />
         </div>

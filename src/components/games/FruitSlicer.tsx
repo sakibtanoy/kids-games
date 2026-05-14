@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../AuthProvider';
 import { cn } from '../../lib/utils';
-import { Trophy, Heart, RefreshCw, X, Bomb, Zap, Shield, Flame, Apple } from 'lucide-react';
+import { Trophy, Heart, RefreshCw, X, Bomb, Zap, Shield, Flame, Apple, Sun } from 'lucide-react';
 
 interface Fruit {
   id: number;
@@ -42,6 +42,8 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [bladeColor, setBladeColor] = useState('#ffffff');
+  const [bladeStyle, setBladeStyle] = useState<'classic' | 'neon' | 'fire' | 'spark'>('classic');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fruitsRef = useRef<Fruit[]>([]);
@@ -81,7 +83,7 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
       else if (r < 0.3) count = 2;
     }
 
-    const speedMult = difficulty === 'easy' ? 0.75 : difficulty === 'pro' ? 0.9 : 1.1;
+    const speedMult = (difficulty === 'easy' ? 0.75 : difficulty === 'pro' ? 0.9 : 1.1) * 0.67;
 
     for (let i = 0; i < count; i++) {
       const isBomb = Math.random() < (difficulty === 'easy' ? 0.04 : difficulty === 'legend' ? 0.18 : 0.1);
@@ -91,7 +93,7 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
       const x = (width * 0.25) + (Math.random() * width * 0.5);
       
       const targetHeight = window.innerHeight * (0.65 + Math.random() * 0.15); 
-      const g = 0.3;
+      const g = 0.135; // Reduced gravity (0.3 * 0.67^2)
       const vyRequired = -Math.sqrt(2 * g * targetHeight);
 
       const newFruit: Fruit = {
@@ -113,9 +115,9 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
   const update = () => {
     if (gameState !== 'playing' || !difficulty) return;
 
-    const spawnChance = difficulty === 'easy' ? 0.008 : difficulty === 'pro' ? 0.012 : 0.02;
+    const spawnChance = difficulty === 'easy' ? 0.015 : difficulty === 'pro' ? 0.025 : 0.04;
     if (Math.random() < spawnChance) {
-      if (fruitsRef.current.length < (difficulty === 'easy' ? 1 : difficulty === 'pro' ? 3 : 4)) {
+      if (fruitsRef.current.length < (difficulty === 'easy' ? 2 : difficulty === 'pro' ? 4 : 6)) {
         spawnFruit();
       }
     }
@@ -123,7 +125,7 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
     fruitsRef.current = fruitsRef.current.filter(fruit => {
       fruit.x += fruit.vx;
       fruit.y += fruit.vy;
-      fruit.vy += 0.3;
+      fruit.vy += 0.135; // Reduced gravity to match slower velocity
       fruit.angle += fruit.rotationSpeed;
 
       const margin = 40;
@@ -162,14 +164,51 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
 
     // Trail
     if (trailRef.current.length > 1) {
+      ctx.save();
       ctx.beginPath();
       ctx.moveTo(trailRef.current[0].x, trailRef.current[0].y);
       for (let i = 1; i < trailRef.current.length; i++) ctx.lineTo(trailRef.current[i].x, trailRef.current[i].y);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 5;
+      
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.stroke();
+
+      if (bladeStyle === 'neon') {
+        ctx.strokeStyle = bladeColor;
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = bladeColor;
+        ctx.stroke();
+        
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 0;
+        ctx.stroke();
+      } else if (bladeStyle === 'fire') {
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 8;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#f59e0b';
+        ctx.stroke();
+        
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      } else if (bladeStyle === 'spark') {
+        ctx.strokeStyle = bladeColor;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([5, 10]);
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = bladeColor;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     // Particles
@@ -246,9 +285,51 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
           <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 bg-slate-50 rounded-xl"><X size={20} /></button>
           <div className="w-16 h-16 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6"><Apple size={32} className="text-indigo-500" /></div>
           <h2 className="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Fruit Slicer</h2>
+          
+          <div className="mb-8 space-y-6 text-left">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Blade Color</p>
+              <div className="flex flex-wrap gap-2">
+                {['#ffffff', '#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#ec4899'].map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setBladeColor(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-4 transition-all",
+                      bladeColor === color ? "border-indigo-500 scale-110 shadow-lg" : "border-transparent opacity-70"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Blade Style</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['classic', 'neon', 'fire', 'spark'] as const).map(style => (
+                  <button
+                    key={style}
+                    onClick={() => setBladeStyle(style)}
+                    className={cn(
+                      "py-2 px-3 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center justify-center gap-2",
+                      bladeStyle === style ? "bg-indigo-500 text-white border-indigo-500 shadow-md" : "bg-white text-slate-400 border-slate-100"
+                    )}
+                  >
+                    {style === 'fire' && <Flame size={14} />}
+                    {style === 'neon' && <Zap size={14} />}
+                    {style === 'spark' && <Sun size={14} />}
+                    {style === 'classic' && <Zap size={14} className="opacity-0 w-0" />}
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3">
             {(['easy', 'pro', 'legend'] as const).map(d => (
-              <button key={d} onClick={() => selectDifficulty(d)} className="w-full py-4 rounded-2xl font-black uppercase text-lg bg-indigo-50 text-indigo-900 hover:bg-indigo-500 hover:text-white transition-all shadow-md active:translate-y-1">{d}</button>
+              <button key={d} onClick={() => selectDifficulty(d)} className="w-full py-4 rounded-2xl font-black uppercase text-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-[0_6px_0_0_#4338ca] active:translate-y-1 active:shadow-none">{d}</button>
             ))}
           </div>
         </div>
