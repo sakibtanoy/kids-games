@@ -124,7 +124,7 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
                       key={g.id} 
                       onClick={() => startGame(g.id)} 
                       className={cn(
-                        "p-6 rounded-[2rem] text-white font-black uppercase text-xs flex flex-col items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_8px_0_0_rgba(0,0,0,0.1)] border-2 border-white/20",
+                        "p-6 rounded-[2rem] text-white font-black uppercase text-xs flex flex-col items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_8px_0_0_rgba(0,0,0,0.1)] border-2 border-white/20 bg-gradient-to-br",
                         g.gradient
                       )}
                     >

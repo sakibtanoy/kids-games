@@ -151,7 +151,16 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
     }
   }, []);
 
-  const selectDifficulty = (diff: Difficulty) => {
+  const resizeCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+  }, []);
+
+  const selectDifficulty = useCallback((diff: Difficulty) => {
     setDifficulty(diff);
     setGameState('playing');
     setScore(0);
@@ -173,16 +182,7 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
     snakesRef.current = snakes;
     setRoster(Object.values(snakes));
     setTimeout(resizeCanvas, 40);
-  };
-
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-  }, []);
+  }, [roomId, playerId, playerName, spawnFood, resizeCanvas]);
 
   useEffect(() => {
     resizeCanvas();
@@ -220,6 +220,12 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
     }, 140);
     return () => clearInterval(sync);
   }, [roomId, user, gameState, playerId]);
+
+  useEffect(() => {
+    if (roomId) {
+      selectDifficulty('medium');
+    }
+  }, [roomId, selectDifficulty]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -429,14 +435,14 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
     if (foodsRef.current.length < 55) spawnFood(18);
 
     const remote = snakeValues(remoteSnakesRef.current).filter(s => s.alive);
-    const allSnakes = [...snakeValues(snakes), ...remote];
+    const victims = [...snakeValues(snakes), ...remote];
 
-    allSnakes.forEach(attacker => {
+    snakeValues(snakes).forEach(attacker => {
       if (!attacker.alive) return;
       const head = attacker.trail[0];
       if (!head) return;
 
-      allSnakes.forEach(victim => {
+      victims.forEach(victim => {
         if (!victim.alive || victim.id === attacker.id) return;
         const body = victim.trail.slice(5);
         const wasBitten = body.some(point => dist(head, point) < attacker.radius + victim.radius * 0.65);
@@ -445,15 +451,10 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
         if (attacker.id === playerId) {
           dropSnakeFruit(attacker);
           gameOver('You bumped into another snake.');
-        } else if (snakes[attacker.id]) {
-          snakes[attacker.id].alive = false;
-          snakes[attacker.id].respawnAt = Date.now() + 2200;
-          dropSnakeFruit(snakes[attacker.id]);
         } else {
-          if (!killedRemoteRef.current.has(attacker.id)) {
-            killedRemoteRef.current.add(attacker.id);
-            dropSnakeFruit(attacker);
-          }
+          attacker.alive = false;
+          attacker.respawnAt = Date.now() + 2200;
+          dropSnakeFruit(attacker);
         }
       });
     });
