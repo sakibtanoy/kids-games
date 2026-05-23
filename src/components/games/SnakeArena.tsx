@@ -429,44 +429,33 @@ export default function SnakeArena({ roomId, onScoreSubmit, onClose }: { roomId?
     if (foodsRef.current.length < 55) spawnFood(18);
 
     const remote = snakeValues(remoteSnakesRef.current).filter(s => s.alive);
-    const victims = [...snakeValues(snakes), ...remote];
-    snakeValues(snakes).forEach(attacker => {
+    const allSnakes = [...snakeValues(snakes), ...remote];
+
+    allSnakes.forEach(attacker => {
       if (!attacker.alive) return;
       const head = attacker.trail[0];
       if (!head) return;
 
-      victims.forEach(victim => {
+      allSnakes.forEach(victim => {
         if (!victim.alive || victim.id === attacker.id) return;
-        const body = victim.trail.slice(victim.id === attacker.id ? 18 : 5);
+        const body = victim.trail.slice(5);
         const wasBitten = body.some(point => dist(head, point) < attacker.radius + victim.radius * 0.65);
         if (!wasBitten) return;
 
-        attacker.score += 25;
-        attacker.length += 38;
-        if (attacker.id === playerId) setScore(attacker.score);
-
-        if (victim.id === playerId) {
-          dropSnakeFruit(victim);
-          gameOver('You got tagged by another snake.');
-        } else if (snakes[victim.id]) {
-          snakes[victim.id].alive = false;
-          snakes[victim.id].respawnAt = Date.now() + 2200;
-          dropSnakeFruit(snakes[victim.id]);
-        } else if (!killedRemoteRef.current.has(victim.id)) {
-          killedRemoteRef.current.add(victim.id);
-          dropSnakeFruit(victim);
+        if (attacker.id === playerId) {
+          dropSnakeFruit(attacker);
+          gameOver('You bumped into another snake.');
+        } else if (snakes[attacker.id]) {
+          snakes[attacker.id].alive = false;
+          snakes[attacker.id].respawnAt = Date.now() + 2200;
+          dropSnakeFruit(snakes[attacker.id]);
+        } else {
+          if (!killedRemoteRef.current.has(attacker.id)) {
+            killedRemoteRef.current.add(attacker.id);
+            dropSnakeFruit(attacker);
+          }
         }
       });
-
-      const selfBody = attacker.trail.slice(18);
-      if (selfBody.some(point => dist(head, point) < attacker.radius * 0.9)) {
-        if (attacker.id === playerId) gameOver('You curled into your own tail.');
-        else {
-          attacker.alive = false;
-          attacker.respawnAt = Date.now() + 1800;
-          dropSnakeFruit(attacker);
-        }
-      }
     });
 
     render();
