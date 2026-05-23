@@ -10,6 +10,16 @@ import {
   Apple,
   Layers,
   ChevronRight,
+  Bird,
+  Brush,
+  Cat,
+  Circle,
+  Fish,
+  Gift,
+  Sparkles,
+  Star,
+  Target,
+  Waves,
   LucideIcon
 } from 'lucide-react';
 
@@ -24,5 +34,15 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Hash,
   Apple,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Bird,
+  Brush,
+  Cat,
+  Circle,
+  Fish,
+  Gift,
+  Sparkles,
+  Star,
+  Target,
+  Waves
 };

@@ -100,7 +100,7 @@ export default function MultiplayerLobby({ onStartGame, onClose }: { onStartGame
           
           <div className="bg-indigo-50 rounded-2xl p-6 mb-8 text-left">
             <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">
-              <Users /> Players ({roomData.players.length}/4)
+              <Users /> Players ({roomData.players.length}/8)
             </h3>
             <div className="space-y-3">
               {roomData.players.map((p: any, i: number) => (

@@ -4,17 +4,15 @@ import { Type, Sparkles, X, RotateCcw, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const EASY_WORDS = [
-  'CAT', 'DOG', 'BIRD', 'FISH', 'FROG', 'BEAR', 'LION', 'WOLF', 'FOX', 'DEER',
-  'ANT', 'BEE', 'BUG', 'PIG', 'COW', 'MOON', 'SUN', 'STAR', 'SKY', 'SEA',
-  'TREE', 'LEAF', 'ROCK', 'SAND', 'DIRT', 'FIRE', 'WIND', 'SNOW', 'RAIN', 'ICE',
-  'APPLE', 'PEACH', 'PEAR', 'PLUM', 'GRAPE', 'MELON', 'LEMON', 'LIME', 'CHERRY', 'BERRY',
-  'CUP', 'MUG', 'BOWL', 'PLATE', 'FORK', 'SPOON', 'KNIFE', 'PAN', 'POT', 'DISH',
-  'BOOK', 'PAGE', 'WORD', 'LINE', 'PEN', 'INK', 'DESK', 'CHAIR', 'LAMP', 'BED',
-  'DOOR', 'WALL', 'ROOF', 'ROOM', 'HALL', 'YARD', 'GATE', 'PATH', 'ROAD', 'STREET',
-  'CAR', 'BUS', 'VAN', 'TRUCK', 'BIKE', 'BOAT', 'SHIP', 'TRAIN', 'JET', 'PLANE',
-  'HAT', 'CAP', 'COAT', 'SHOE', 'SOCK', 'SHIRT', 'PANT', 'BELT', 'RING', 'WATCH',
-  'HAND', 'FOOT', 'ARM', 'LEG', 'HEAD', 'EYE', 'EAR', 'NOSE', 'LIP', 'FACE',
-  'HAPPY', 'SAD', 'MAD', 'GLAD', 'GOOD', 'BAD', 'BIG', 'SMALL', 'TALL', 'SHORT'
+  'CAT', 'DOG', 'COW', 'PIG', 'HEN', 'BEE', 'ANT', 'BUG', 'FOX', 'FISH',
+  'MOM', 'DAD', 'BABY', 'BOY', 'GIRL', 'ME', 'YOU', 'WE',
+  'SUN', 'MOON', 'STAR', 'SKY', 'RAIN', 'SNOW', 'TREE', 'LEAF', 'FLOWER',
+  'BALL', 'TOY', 'CAR', 'BUS', 'BIKE', 'BOAT', 'BOOK', 'BAG', 'BOX',
+  'CUP', 'BOWL', 'MILK', 'EGG', 'RICE', 'CAKE', 'APPLE', 'PEAR',
+  'HAT', 'CAP', 'SHOE', 'SOCK', 'BED', 'DOOR', 'ROOM',
+  'EYE', 'EAR', 'NOSE', 'HAND', 'FOOT', 'ARM', 'LEG',
+  'RED', 'BLUE', 'PINK', 'GREEN', 'YELLOW',
+  'BIG', 'SMALL', 'HOT', 'COLD', 'HAPPY', 'SAD', 'GOOD'
 ];
 
 const PRO_WORDS = [

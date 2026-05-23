@@ -36,7 +36,33 @@ export interface GameScore {
   timestamp: any; // Firestore serverTimestamp
 }
 
-export type GameId = 'space-adventure' | 'candy-cruise' | 'math-quest' | 'word-spark' | 'racing' | 'puzzle';
+export type GameId =
+  | 'tic-tac-toe'
+  | 'space-adventure'
+  | 'flappy-forest'
+  | 'candy-cruise'
+  | 'math-quest'
+  | 'word-spark'
+  | 'racing'
+  | 'fruit-slicer'
+  | 'whack-rabbit'
+  | 'puzzle'
+  | 'tower-stacker'
+  | 'snake-arena'
+  | 'balloon-pop'
+  | 'tiny-cat-runner'
+  | 'candy-catcher'
+  | 'fish-feeding'
+  | 'memory-animals'
+  | 'mini-car-dodge'
+  | 'bubble-shooter'
+  | 'hungry-panda'
+  | 'jumping-frog'
+  | 'toy-claw'
+  | 'monster-cleanup'
+  | 'rocket-tap'
+  | 'penguin-slide'
+  | 'paint-splash';
 
 export interface GameMeta {
   id: GameId;

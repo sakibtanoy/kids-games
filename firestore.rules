@@ -24,11 +24,6 @@ service cloud.firestore {
       return resource.data;
     }
 
-    // Help session for connectivity check
-    match /test/connection {
-      allow get: if true;
-    }
-
     // 1. User Profiles
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -49,9 +44,14 @@ service cloud.firestore {
       allow delete: if isSignedIn();
     }
 
+    match /rooms/{roomId}/snakes/{snakeId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn() && request.auth.uid == snakeId;
+    }
+
     // 4. Unique Usernames
     match /usernames/{username} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
@@ -59,4 +59,3 @@ service cloud.firestore {
 
   }
 }
-

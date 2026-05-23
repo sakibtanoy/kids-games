@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../AuthProvider';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Trophy, Heart, RefreshCw, X, Bomb, Zap, Shield, Flame, Apple, Sun } from 'lucide-react';
+import { Trophy, Heart, X, Zap, Flame, Apple, Sun } from 'lucide-react';
 
 interface Fruit {
   id: number;
@@ -37,11 +36,11 @@ const FRUIT_TYPES = [
 type Difficulty = 'easy' | 'pro' | 'legend';
 
 export default function FruitSlicer({ onComplete, onClose }: { onComplete: (score: number) => void, onClose: () => void }) {
-  const { profile } = useAuth();
   const [gameState, setGameState] = useState<'difficulty' | 'playing' | 'gameOver'>('difficulty');
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [combo, setCombo] = useState(0);
   const [bladeColor, setBladeColor] = useState('#ffffff');
   const [bladeStyle, setBladeStyle] = useState<'classic' | 'neon' | 'fire' | 'spark'>('classic');
   
@@ -51,12 +50,17 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
   const trailRef = useRef<{ x: number, y: number, time: number }[]>([]);
   const lastMousePos = useRef<{ x: number, y: number } | null>(null);
   const requestRef = useRef<number>();
+  const comboRef = useRef(0);
+  const lastSliceTimeRef = useRef(0);
 
   const selectDifficulty = (diff: Difficulty) => {
     setDifficulty(diff);
     setGameState('playing');
     setScore(0);
     setLives(3);
+    setCombo(0);
+    comboRef.current = 0;
+    lastSliceTimeRef.current = 0;
     fruitsRef.current = [];
     particlesRef.current = [];
     // Short delay to ensure canvas is ready
@@ -253,13 +257,55 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
     });
   };
 
+  const playSliceTone = (bomb = false) => {
+    try {
+      const audio = new AudioContext();
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = bomb ? 'sawtooth' : 'triangle';
+      osc.frequency.value = bomb ? 120 : 520 + comboRef.current * 28;
+      gain.gain.value = 0.04;
+      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start();
+      osc.stop(audio.currentTime + 0.08);
+    } catch {
+      // Audio is optional because browsers require user gestures.
+    }
+  };
+
   const sliceFruit = (fruit: Fruit) => {
     fruit.isSliced = true;
-    if (fruit.isBomb) { setGameState('gameOver'); return; }
-    setScore(prev => prev + (difficulty === 'easy' ? 10 : difficulty === 'pro' ? 20 : 30));
+    if (fruit.isBomb) {
+      playSliceTone(true);
+      setGameState('gameOver');
+      return;
+    }
+    const now = Date.now();
+    const nextCombo = now - lastSliceTimeRef.current < 650 ? comboRef.current + 1 : 1;
+    comboRef.current = nextCombo;
+    lastSliceTimeRef.current = now;
+    setCombo(nextCombo);
+    setTimeout(() => {
+      if (Date.now() - lastSliceTimeRef.current >= 650) {
+        comboRef.current = 0;
+        setCombo(0);
+      }
+    }, 700);
+    playSliceTone();
+    const base = difficulty === 'easy' ? 10 : difficulty === 'pro' ? 20 : 30;
+    setScore(prev => prev + base + Math.min(60, (nextCombo - 1) * 6));
     const color = FRUIT_TYPES.find(f => f.icon === fruit.type)?.color || '#fff';
-    for (let i = 0; i < 12; i++) {
-      particlesRef.current.push({ x: fruit.x, y: fruit.y, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, color, life: 1.0 });
+    for (let i = 0; i < 20; i++) {
+      particlesRef.current.push({
+        x: fruit.x,
+        y: fruit.y,
+        vx: (Math.random() - 0.5) * 15,
+        vy: (Math.random() - 0.5) * 15,
+        color: i % 4 === 0 ? '#ffffff' : color,
+        life: 1.0
+      });
     }
   };
 
@@ -284,7 +330,7 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
         <div className="bg-white rounded-[3rem] p-8 md:p-12 text-center max-w-sm w-full shadow-2xl border-b-[12px] border-indigo-100 relative">
           <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 bg-slate-50 rounded-xl"><X size={20} /></button>
           <div className="w-16 h-16 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6"><Apple size={32} className="text-indigo-500" /></div>
-          <h2 className="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Fruit Slicer</h2>
+          <h2 className="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Glass Fruit Slice</h2>
           
           <div className="mb-8 space-y-6 text-left">
             <div>
@@ -345,6 +391,12 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
             <p className="text-[8px] font-black uppercase text-indigo-300">Score</p>
             <p className="text-2xl font-black text-yellow-400 leading-none">{score}</p>
           </div>
+          {combo > 1 && (
+            <div className="bg-yellow-300 text-indigo-950 px-3 py-1.5 rounded-xl border-2 border-white/30 shadow-lg">
+              <p className="text-[8px] font-black uppercase">Combo</p>
+              <p className="text-xl font-black leading-none">x{combo}</p>
+            </div>
+          )}
           <div className="flex gap-1">
             {[...Array(3)].map((_, i) => <Heart key={i} size={20} className={cn("drop-shadow-lg", i < lives ? "fill-red-500 text-red-500" : "text-white/10")} />)}
           </div>
@@ -352,7 +404,7 @@ export default function FruitSlicer({ onComplete, onClose }: { onComplete: (scor
         <button onClick={onClose} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-red-500 transition-all pointer-events-auto active:scale-90"><X size={20} /></button>
       </div>
 
-      <canvas ref={canvasRef} onPointerMove={handlePointerMove} className="fixed inset-0 w-full h-full cursor-crosshair touch-none" />
+      <canvas ref={canvasRef} onPointerDown={handlePointerMove} onPointerMove={handlePointerMove} className="fixed inset-0 w-full h-full cursor-crosshair touch-none" />
 
       <AnimatePresence>
         {gameState === 'gameOver' && (

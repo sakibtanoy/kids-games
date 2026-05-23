@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { 
   Users,
@@ -83,20 +83,8 @@ interface GameCardProps {
   key?: any;
 }
 
-const PHONE_GAMES = ['tic-tac-toe', 'math-quest', 'word-spark', 'racing', 'fruit-slicer', 'whack-rabbit', 'space-adventure'];
-
 export function GameCard({ game, onClick, isRestricted }: GameCardProps) {
   const Icon = ICON_MAP[game.icon];
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const isComingSoon = isMobile && !PHONE_GAMES.includes(game.id);
 
   return (
     <motion.div
@@ -129,13 +117,13 @@ export function GameCard({ game, onClick, isRestricted }: GameCardProps) {
           {game.title}
         </h3>
         <button 
-          onClick={isComingSoon ? undefined : onClick}
+          onClick={isRestricted ? undefined : onClick}
           className={cn(
             "mt-1 font-black py-1.5 md:py-2.5 px-6 md:px-10 rounded-full shadow-lg text-[10px] md:text-sm transition-all uppercase tracking-wider",
-            isComingSoon ? "bg-slate-200/50 text-slate-400 cursor-not-allowed" : "bg-white text-indigo-900 hover:scale-105 active:scale-95"
+            isRestricted ? "bg-slate-200/50 text-slate-400 cursor-not-allowed" : "bg-white text-indigo-900 hover:scale-105 active:scale-95"
           )}
         >
-          {isComingSoon ? 'Coming Soon' : (isRestricted ? 'Locked' : 'Play')}
+          {isRestricted ? 'Locked' : 'Play'}
         </button>
       </div>
     </motion.div>

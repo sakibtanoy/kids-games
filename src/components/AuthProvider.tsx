@@ -65,7 +65,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile> | Record<string, unknown>) => Promise<void>;
   checkUsername: (username: string) => Promise<boolean>;
   claimUsername: (username: string) => Promise<void>;
   searchUsers: (query: string) => Promise<UserProfile[]>;
@@ -100,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               displayName: firebaseUser.displayName || 'Hero',
-              avatarUrl: firebaseUser.photoURL || undefined,
               totalScore: 0,
               badges: [],
               achievements: [],
@@ -112,7 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               },
               isUsernameSet: false,
               createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
+              ...(firebaseUser.photoURL ? { avatarUrl: firebaseUser.photoURL } : {})
             };
 
             setDoc(userDocRef, {
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
   };
 
-  const updateProfile = async (data: Partial<UserProfile>) => {
+  const updateProfile = async (data: Partial<UserProfile> | Record<string, unknown>) => {
     if (!user) return;
     const userDocRef = doc(db, 'users', user.uid);
     try {

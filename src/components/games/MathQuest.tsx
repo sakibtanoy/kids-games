@@ -23,17 +23,17 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
     let ops = ['+', '-'];
 
     if (currentDifficulty === 'easy') {
-       ops.push('*', '/'); 
-       const op = ops[Math.floor(Math.random() * ops.length)];
+       const roll = Math.random();
+       const op = roll < 0.45 ? '+' : roll < 0.9 ? '-' : roll < 0.95 ? '*' : '/';
        if (op === '+' || op === '-') {
-         a = Math.floor(Math.random() * 20) + 1;
-         b = Math.floor(Math.random() * 20) + 1;
-       } else if (op === '*') {
          a = Math.floor(Math.random() * 10) + 1;
          b = Math.floor(Math.random() * 10) + 1;
+       } else if (op === '*') {
+         a = Math.floor(Math.random() * 4) + 2;
+         b = Math.floor(Math.random() * 4) + 1;
        } else {
-         b = Math.floor(Math.random() * 10) + 1;
-         a = b * (Math.floor(Math.random() * 5) + 1);
+         b = Math.floor(Math.random() * 4) + 1;
+         a = b * (Math.floor(Math.random() * 4) + 1);
        }
        const ans = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
        setProblemData(a, b, op, ans, currentDifficulty);
@@ -72,17 +72,18 @@ export default function MathQuest({ onScoreSubmit, onClose }: { onScoreSubmit: (
 
   const setProblemData = (a: number, b: number, op: string, ans: number, diff: string) => {
     if (op === '-' && a < b) [a, b] = [b, a];
-    const options = new Set<number>([ans]);
+    const answer = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+    const options = new Set<number>([answer]);
     const offsetRange = diff === 'legend' ? 50 : diff === 'pro' ? 20 : 10;
     
     while (options.size < 4) {
-      let wrongAns = ans + (Math.floor(Math.random() * offsetRange) - offsetRange / 2);
-      if (wrongAns === ans || wrongAns < 0) wrongAns = ans + Math.floor(Math.random() * 10) + 1;
+      let wrongAns = answer + (Math.floor(Math.random() * offsetRange) - offsetRange / 2);
+      if (wrongAns === answer || wrongAns < 0) wrongAns = answer + Math.floor(Math.random() * 10) + 1;
       options.add(wrongAns);
     }
     
     setProblem({
-      a, b, op, answer: ans,
+      a, b, op, answer,
       options: Array.from(options).sort(() => Math.random() - 0.5)
     });
   };

@@ -35,6 +35,23 @@ import TicTacToe from './components/games/TicTacToe';
 import FruitSlicer from './components/games/FruitSlicer';
 import TowerStacker from './components/games/TowerStacker';
 import SnakeArena from './components/games/SnakeArena';
+import {
+  BalloonPopAdventure,
+  TinyCatRunner,
+  CandyCatcher,
+  FishFeedingFrenzy,
+  MemoryMatchAnimals,
+  MiniCarDodge,
+  BubbleShooterIsland,
+  HungryPanda,
+  JumpingFrog,
+  ToyClawMachine,
+  CuteMonsterCleanup,
+  RocketTapEscape,
+  PenguinIceSlide,
+  MagicPaintSplash,
+  FlappyForest
+} from './components/games/MiniArcade';
 import MultiplayerLobby from './components/MultiplayerLobby';
 import UsernameSelection from './components/UsernameSelection';
 import SocialManager from './components/SocialManager';
@@ -414,6 +431,96 @@ function Dashboard() {
         {activeGame === 'snake-arena' && (
           <SnakeArena 
             roomId={activeRoomId}
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'flappy-forest' && (
+          <FlappyForest 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'balloon-pop' && (
+          <BalloonPopAdventure 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'tiny-cat-runner' && (
+          <TinyCatRunner 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'candy-catcher' && (
+          <CandyCatcher 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'fish-feeding' && (
+          <FishFeedingFrenzy 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'memory-animals' && (
+          <MemoryMatchAnimals 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'mini-car-dodge' && (
+          <MiniCarDodge 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'bubble-shooter' && (
+          <BubbleShooterIsland 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'hungry-panda' && (
+          <HungryPanda 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'jumping-frog' && (
+          <JumpingFrog 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'toy-claw' && (
+          <ToyClawMachine 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'monster-cleanup' && (
+          <CuteMonsterCleanup 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'rocket-tap' && (
+          <RocketTapEscape 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'penguin-slide' && (
+          <PenguinIceSlide 
+            onScoreSubmit={handleScoreSubmit} 
+            onClose={handleCloseGame} 
+          />
+        )}
+        {activeGame === 'paint-splash' && (
+          <MagicPaintSplash 
             onScoreSubmit={handleScoreSubmit} 
             onClose={handleCloseGame} 
           />
